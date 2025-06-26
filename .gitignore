@@ -1,1 +1,6 @@
+# Ignorar entornos virtuales
 .env
+/tfm_env
+
+# Ignorar archivos cache
+__pycache__/

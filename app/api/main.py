@@ -1,9 +1,17 @@
 # This is the point of entry to my api
 
 from fastapi import FastAPI
-from api.routes import router
+from app.api.routes import analysis
 
-api = FastAPI()
+app = FastAPI()
 
-app.include_router(router)
+# Routers
+app.include_router(analysis.router, prefix='/analyse')
+
+# Tensting endpoint
+@app.get("/test") 
+def test():
+    return {
+            "message": "La API esta funcionando."
+            }
 
