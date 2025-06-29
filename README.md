@@ -14,3 +14,14 @@ o también:
     **app.api.main** -> Es la ruta al MAIN de la API
     **:app** -> Es el nombre de la instancia de FastAPI en el main.py
     **--reload** -> Permite que se recargue el servidor cuando detecte cambios en el código fuente
+
+# ¿Cómo funciona?
+Arquitectura:
+1. API principal (Host)
+2. Base de datos Mongo (Docker)
+3. Nginx (Host)
+4. Microservicio 1: Smishing Type (Docker)
+5. Microservicio 2: NER Detection (Docker)
+6. Microservicio 3: Deteccion de URL, Mail, Phone... (Docker)
+7. Microservicio 4: Obtención de código HTML (Docker)
+8. Microservicio 5: Función de similitud de campañas (Docker)

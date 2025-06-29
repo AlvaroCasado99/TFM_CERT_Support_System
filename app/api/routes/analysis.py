@@ -49,8 +49,9 @@ def generate_basic_report(item: Item):
     # Subir a la base de datos la ISSUE
 
     # Genrerar un reporte
-    report = issue.report_basic()
+    #report = issue.report_basic()
     
     return {
-            "msg": item.msg
+            "msg": item.msg,
+            "issue": issue.to_dict()
             }

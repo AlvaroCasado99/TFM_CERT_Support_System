@@ -1,7 +1,7 @@
 # Clase para cada mensaje
 class Issue:
     # Constructor de la clase
-    def __init__(self, msg, flavour, entity, url, mail, phone, html, embeddings, campaign):
+    def __init__(self, msg = "", flavour = "", entity = "", url = "", mail = "", phone = "", html = "", embeddings = [], campaign = ""):
         self.msg = msg 
         self.flavour = flavour 
         self.entity = entity 
@@ -117,7 +117,7 @@ class Issue:
                 }
 
     # Devuelte el contenido de la ISSUE en formato JSON (dict)
-    def to_dict():
+    def to_dict(self):
         return {
                 "msg": self._msg ,
                 "flavour": self._flavour ,
