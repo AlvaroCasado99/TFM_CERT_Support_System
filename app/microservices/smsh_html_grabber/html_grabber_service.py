@@ -30,5 +30,5 @@ def smhs_type(req: Request):
     # predictions, raw_outputs = model.predict(msg)
 
     return {
-            "predictions": "Indefinido"
+            "html": "<h1>Hola Mundo</h1>"
             }

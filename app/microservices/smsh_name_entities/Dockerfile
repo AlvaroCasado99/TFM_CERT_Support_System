@@ -7,7 +7,7 @@ EXPOSE 2222
 # Copiar archivos necesarios
 COPY ./start.sh /start.sh
 COPY ./requirements.txt /requirements.txt
-COPY ./type_detector_service.py /type_detector_service.py
+COPY ./name_entities_service.py /name_entities_service.py
 
 # Dependencies
 RUN apt-get update && apt-get install -y \

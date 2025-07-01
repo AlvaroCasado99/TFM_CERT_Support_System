@@ -30,5 +30,5 @@ def smhs_type(req: Request):
     # predictions, raw_outputs = model.predict(msg)
 
     return {
-            "predictions": "Indefinido"
+            "campaign": "La de verano"
             }

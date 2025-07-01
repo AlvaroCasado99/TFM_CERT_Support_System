@@ -15,6 +15,7 @@ services:
     container_name: ms1
     ports:
       - "8001:8000"
+      - "2201:2222"
     privileged: false
     restart: unless-stopped
 
@@ -24,6 +25,7 @@ services:
     container_name: ms2
     ports:
       - "8002:8000"
+      - "2202:2222"
     privileged: false
     restart: unless-stopped
 
@@ -33,6 +35,7 @@ services:
     container_name: ms3
     ports:
       - "8003:8000"
+      - "2203:2222"
     privileged: false
     restart: unless-stopped
 
@@ -42,6 +45,7 @@ services:
     container_name: ms4
     ports:
       - "8004:8000"
+      - "2204:2222"
     depends_on:
       - mongo
     privileged: false
