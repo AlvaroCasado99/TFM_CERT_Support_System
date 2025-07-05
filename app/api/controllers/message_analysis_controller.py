@@ -39,6 +39,7 @@ async def _analyse_text(msg):
 
     issue.msg = msg
 
+    # Paralelización de las peticiones a los contenedores
     async with httpx.AsyncClient() as client:
         r1, r2, r3, r4 = await asyncio.gather(
                 client.post("http://localhost:8001/check", json={"msg": msg}),

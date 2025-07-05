@@ -4,3 +4,9 @@
 
 # Ignorar archivos cache
 __pycache__/
+
+# Ignorar los modelos
+ml/
+
+# Ignorar archivos temporales
+*.swp
