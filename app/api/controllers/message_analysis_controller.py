@@ -90,9 +90,6 @@ async def _analyse_text(msg):
     await Smishing.insert_one(message)
 
 
-    return {
-            "msg": msg,
-            "issue": issue.to_dict()
-            }
+    return issue.to_dict()
 
 

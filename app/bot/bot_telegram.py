@@ -8,6 +8,8 @@ from telegram.ext import (
         ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, ConversationHandler, filters
                           )
 
+from responses import responses
+
 # Cargar las variables de entorno de .env
 load_dotenv()
 
@@ -17,6 +19,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Estados para cada flujo de onversaciones
 STATE_SMS = 1
 
+# Variables globales
+DEFAULT_LENG = "es"
+
 # Funcione de los manejadores
 
 """
@@ -24,7 +29,8 @@ STATE_SMS = 1
     Es un comando de ejemplo para comprobar que el bot está activo
 """
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f'Hello {update.effective_user.first_name}')
+    greetings = responses[DEFAULT_LENG]['greetings']
+    await update.message.reply_text(f'{greetings} {update.effective_user.first_name}')
 
 
 """
@@ -33,8 +39,12 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reglas para usar el bot
 """
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f"Bienvenido {update.effective_user.first_name}!")
-    await update.message.reply_text(f"*** REGLAS DEL BOT ***")   
+    greetings = responses[DEFAULT_LENG]['greetings']
+    rules = responses[DEFAULT_LENG]['rules']
+    commands = responses[DEFAULT_LENG]['commands']
+    await update.message.reply_text(f'{greetings} {update.effective_user.first_name}')
+    await update.message.reply_text(rules)   
+    await update.message.reply_text(commands)   
 
 
 """
@@ -42,7 +52,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     Devuelve las reglas y los comandos para interactuar con el bot
 """
 async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f"*** REGLAS DEL BOT ***")   
+    rules = responses[DEFAULT_LENG]['rules']
+    commands = responses[DEFAULT_LENG]['commands']
+    await update.message.reply_text(rules)   
+    await update.message.reply_text(commands)   
+
+
+"""
+    Comando /commands
+    Devuelve los comandos para interactuar con el bot
+"""
+async def commands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    commands = responses[DEFAULT_LENG]['commands']
+    await update.message.reply_text(commands)
+
+
 
 """
     No es un comando.
@@ -51,7 +75,7 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     dispone del comando /help para ver todos los comandos
 """
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Lo siento, no entiendo lo que me quieres decir. Recuerda que puedes consular la lista de comandos escribiendo /help.")
+    await update.message.reply_text(responses[DEFAULT_LENG]["unknown"])
 
 
 """
@@ -61,7 +85,7 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     que reconoce la acción e incluye una breve advertencia.
 """
 async def start_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Entendido! Estoy listo para analizar el SMS sospechoso.")
+    await update.message.reply_text(responses[DEFAULT_LENG]["smsh_ready"])
     return STATE_SMS
 
 """
@@ -71,7 +95,7 @@ async def start_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     con algunas indicaciones breves.
 """
 async def process_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Recibido, me pondré con ello ahora mismo.")
+    await update.message.reply_text(responses[DEFAULT_LENG]["smsh_go"])
     msg = update.message.text
 
     # Petición a la API
@@ -84,7 +108,19 @@ async def process_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_code = response.status_code
     result = response.json()
 
-    await update.message.reply_text(f"Esto es lo que sabemos: {result}")
+    # Construir la respuesta con los datos
+    response = "\n" + responses[DEFAULT_LENG]["smsh_flavour"].replace("$$FLAVOUR$$", result["flavour"]) + "\n"
+    if isinstance(result['entity'], str):
+        response += "\n" +  responses[DEFAULT_LENG]["smsh_entity"].replace("$$ENTITY$$", result["entity"]) + "\n"
+    else:
+        response += "\n" + responses[DEFAULT_LENG]["smsh_entities"].replace("$$ENTITIES$$", ", ".join(result["entity"])) + "\n"
+
+    if result['url']:
+        response += "\n" + responses[DEFAULT_LENG]["smsh_url"] + "\n"
+    
+    response = responses[DEFAULT_LENG]["smsh_result"] + "\n" + response 
+
+    await update.message.reply_text(response)
     
     return ConversationHandler.END
     
@@ -96,7 +132,7 @@ async def process_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     los flujos de conversaciones
 """
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await (update.message.reply_text("Conversación terminada. ¿En qué puedo ayudarte?"))
+    await (update.message.reply_text(responses[DEFAULT_LENG]["smsh_end"]))
     return ConversationHandler.END
 
 
@@ -113,6 +149,7 @@ sms_text_handler = ConversationHandler(
 # Definir los manejadores de comandos
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", info))
+app.add_handler(CommandHandler("commands", commands))
 app.add_handler(CommandHandler("hello", hello))
 app.add_handler(sms_text_handler)
 app.add_handler(MessageHandler(filters.ALL, unknown))   # Es el handler por defecto, debe ser el último
