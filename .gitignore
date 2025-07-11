@@ -10,3 +10,6 @@ ml/
 
 # Ignorar archivos temporales
 *.swp
+
+# ignorar modelos
+bert_classifier/
