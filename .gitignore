@@ -13,3 +13,6 @@ ml/
 
 # ignorar modelos
 bert_classifier/
+
+# Ignorar test.sh
+test.sh

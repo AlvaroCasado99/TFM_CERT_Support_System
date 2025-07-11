@@ -39,8 +39,7 @@ def app_init():
 
     # Obtener el mapa de clases
     with open(f"{model_path}/training_args.json", "r") as f:
-        classes = json.load(f)['labels_map']
-    classes = {v: k for k, v in classes.items()}    # Invertir el orden
+        classes = json.load(f)['labels_list']
 
     # Cargar modelo NER
     tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
@@ -56,15 +55,10 @@ def smhs_type(req: Request):
     msg = [req.msg]
 
     predictions = classificator(msg)
-
-    print(f"Estas son las predicciones:\n{predictions}")
-
-    # Sacar la predicción y convertirla a texto con el mapa de clases
-    #predictions = classes[predictions.tolist()[0]]
+    predicted_class = classes[int(predictions[0]['label'].split('_')[1])]
 
     return {
-            #"predictions": predictions
-            "predictions": "prueba de predicciones"
+            "predictions": predicted_class
             }
 
 
@@ -75,11 +69,8 @@ def snsh_ner(req: Request):
 
     results = ner(msg)
     
-    print(f"Estas son las entidades:\n{results}")
-
     return {
-            #"entities": results
-            "entities": "Prueba de entidades"
+            "entities": results
             }
 
 
@@ -88,11 +79,8 @@ def snsh_ner(req: Request):
 def smsh_embedding(req: Request):
     msg = req.msg
 
-    embeddings = embedder.encode([msg], convert_to_tensor=False) # Devuelve un tensor en formato de lista
-    
-    print(f"Estos son los embeddings:\n{embeddings}")
-
+    embeddings = embedder.encode([msg], convert_to_tensor=False)[0] # Devuelve un tensor en formato de lista
+    embeddings = [float(emb) for emb in embeddings] 
     return {
-            #"embeddings": embeddings
-            "embeddings": ["prueba", "de", "embedding"]
+            "embeddings": embeddings
             }

@@ -8,6 +8,7 @@ EXPOSE 2222
 COPY ./start.sh /start.sh
 COPY ./requirements.txt /requirements.txt
 COPY ./ia_service.py /ia_service.py
+COPY ./bert_classifier /bert_classifier
 
 # Dependencies
 RUN apt-get update && apt-get install -y \
@@ -41,7 +42,8 @@ RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config && \
 
 # Configuración para la API del microservicio
 RUN python3 -m venv /venv && \
-	/venv/bin/pip install -r requirements.txt
+	/venv/bin/pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
+	/venv/bin/pip3 install -r requirements.txt
 
 # Elimino la cache para alivianar la imagen
 RUN rm -rf /root/.cache/pip
