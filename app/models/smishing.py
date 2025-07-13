@@ -11,6 +11,7 @@ class Smishing(Document):
     phone: Optional[str]
     html: Optional[str]
     embeddings: list
+    norm_embeddings: list
     campaign: Optional[str]
 
     class Settings:

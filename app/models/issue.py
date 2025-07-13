@@ -1,7 +1,7 @@
 # Clase para cada mensaje
 class Issue:
     # Constructor de la clase
-    def __init__(self, msg = "", flavour = "", entity = "", url = "", mail = "", phone = "", html = "", embeddings = [], campaign = ""):
+    def __init__(self, msg = "", flavour = "", entity = "", url = "", mail = "", phone = "", html = "", embeddings = [], norm_embeddings = [], campaign = ""):
         self.msg = msg 
         self.flavour = flavour 
         self.entity = entity 
@@ -9,6 +9,7 @@ class Issue:
         self.mail = mail 
         self.phone = phone 
         self.html = html 
+        self.norm_embeddings = norm_embeddings
         self.embeddings = embeddings
         self.campaign = campaign
 
@@ -93,6 +94,16 @@ class Issue:
         self._embeddings = valor
 
     @property
+    def norm_embeddings(self) -> list[float]:
+        return self._norm_embeddings
+
+    @norm_embeddings.setter
+    def norm_embeddings(self, valor: list[float]):
+        if not isinstance(valor, list) or not all(isinstance(x, float) for x in valor):
+            raise TypeError("Normalized embeddings debe ser una lista de floats.")
+        self._norm_embeddings = valor
+
+    @property
     def campaign(self) -> str:
         return self._campaign
 
@@ -127,5 +138,6 @@ class Issue:
                 "phone": self._phone ,
                 "html": self._html ,
                 "embeddings": self._embeddings ,
+                "norm_embeddings": self._norm_embeddings,
                 "campaign": self._campaign ,
                 }

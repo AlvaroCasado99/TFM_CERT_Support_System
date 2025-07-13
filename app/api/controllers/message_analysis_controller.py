@@ -41,23 +41,29 @@ async def _analyse_text(msg):
 
     # Paralelización de las peticiones a los contenedores
     async with httpx.AsyncClient() as client:
-        r1, r2, r3, r4 = await asyncio.gather(
+        r1, r2, r3, r4, r5 = await asyncio.gather(
                 client.post("http://localhost:8001/check", json={"msg": msg}),
-                client.post("http://localhost:8002/check", json={"msg": msg}),
-                client.post("http://localhost:8003/check", json={"msg": msg}),
-                client.post("http://localhost:8004/check", json={"msg": msg}),
+                client.post("http://localhost:8001/entity", json={"msg": msg}),
+                client.post("http://localhost:8001/embedding", json={"msg": msg}),
+                client.post("http://localhost:8002/html", json={"msg": msg}),
+                client.post("http://localhost:8003/campaign", json={"msg": msg}),
         )
 
     r1 = r1.json()["predictions"]
     r2 = r2.json()["entity"]
-    r3 = r3.json()["html"]
-    r4 = r4.json()["campaign"]
+    r3 = r3.json()
+    r4 = r4.json()["html"]
+    r5 = r5.json()["campaign"]
 
     # Conocer el tipo de smishing
     issue.flavour = r1
 
     # Buscar entidades en el mensaje
     issue.entity = r2
+
+    # Obtener los embeddings
+    issue.embedding = r3["embedding"]
+    issue.norm_embedding = r3["norm_embedding"]
 
     # Identificar URL, MAIL, PHONE
     issue.url = "http://URL_de_prueba.com"
@@ -66,14 +72,10 @@ async def _analyse_text(msg):
 
     # Obtener código HTML de la URL
     if issue.url:
-        issue.html = r3
+        issue.html = r4
 
-    # Extraer los embeddings del mensaje con BERT
-
-    # Pasar por función de similitud
-    # Comparar con otras de la base de datos
-    # Obtener y guardar el ID de la campaña
-    issue.campaign = r4
+    # Obtener (si existe campaña asociada)
+    issue.campaign = r5
 
     # Subir a la base de datos la ISSUE
     message = Smishing(
@@ -85,6 +87,7 @@ async def _analyse_text(msg):
             phone = issue.phone,
             html = issue.html,
             embeddings = issue.embeddings,
+            norm_embeddings = issue.norm_embeddings,
             campaign = issue.campaign
             )
     await Smishing.insert_one(message)

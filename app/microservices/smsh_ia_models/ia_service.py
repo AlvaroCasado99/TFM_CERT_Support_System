@@ -7,8 +7,8 @@ from fastapi import FastAPI
 
 from transformers import AutoTokenizer, AutoModelForTokenClassification, AutoModelForSequenceClassification
 from transformers import pipeline
-
 from sentence_transformers import SentenceTransformer
+from sklearn.preprocessing import normalize
 
 # API
 app = FastAPI()
@@ -78,9 +78,15 @@ def snsh_ner(req: Request):
 @app.post("/embedding")
 def smsh_embedding(req: Request):
     msg = req.msg
-
+    
+    # Obtener los embedings del mensaje
     embeddings = embedder.encode([msg], convert_to_tensor=False)[0] # Devuelve un tensor en formato de lista
     embeddings = [float(emb) for emb in embeddings] 
+
+    # Normalizar los embeddings
+    norm_embeddings = normalize(embeddings, norm='l2')
+
     return {
-            "embeddings": embeddings
+            "embeddings": embeddings,
+            "norm_embeddings": norm_embeddings
             }

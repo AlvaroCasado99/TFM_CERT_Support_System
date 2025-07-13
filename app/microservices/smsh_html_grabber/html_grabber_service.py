@@ -1,9 +1,8 @@
 import os
-# import torch
+import httpx
 
 from pydantic import BaseModel
 from fastapi import FastAPI
-# from simpletransformers.classification import ClassificationModel
 
 # API
 app = FastAPI()
@@ -13,22 +12,25 @@ model = None
 
 # Modelo para el cuerpo de los requests
 class Request(BaseModel):
-    msg: str
+    url: str
 
-# Acciones a realizar al levantar la API
-@app.on_event("startup")
-def app_init():
-    global model
-    # use_cuda = torch.cuda.is_available()
-    # model = ClassificationModel('bert', 'ruta/al/modelo/guardado', use_cuda=use_cuda)
-
-# Endpoint que comprueba el mensaje
-@app.post("/check")
-def smhs_type(req: Request):
-    msg = [req.msg]
-
-    # predictions, raw_outputs = model.predict(msg)
+# Endpoint que comprueba la url y devuelve su html
+@app.post("/url")
+async def smhs_type(req: Request):
+    url = req.url
+    html = ""
+    
+    # Comprobar si la URL sigue activa con un tiempo de espera fijo
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, timeout=10.0)
+            if response.status_code == 200:
+                html = response.text
+        except httpx.ConnectError as e:
+            print(f"Hubo un problema al intentar conectar con {url}: {e}")
+        except httpx.UnsupportedProtocol as e:
+            print(f"Hubo con el protocolo de la url '{url}': {e}")
 
     return {
-            "html": "<h1>Hola Mundo</h1>"
+            "html": html
             }

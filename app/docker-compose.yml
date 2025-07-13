@@ -11,7 +11,7 @@ services:
 
   ms1:
     image: ms/type-detector
-    build: ./microservices/smsh_type_detector
+    build: ./microservices/smsh_ia_models
     container_name: ms1
     ports:
       - "8001:8000"
@@ -20,8 +20,8 @@ services:
     restart: unless-stopped
 
   ms2:
-    image: ms/name-entities
-    build: ./microservices/smsh_name_entities
+    image: ms/html-grabber
+    build: ./microservices/smsh_html_grabber
     container_name: ms2
     ports:
       - "8002:8000"
@@ -30,22 +30,12 @@ services:
     restart: unless-stopped
 
   ms3:
-    image: ms/html-grabber
-    build: ./microservices/smsh_html_grabber
+    image: ms/campaign-identifier
+    build: ./microservices/smsh_campaign_identifier
     container_name: ms3
     ports:
       - "8003:8000"
       - "2203:2222"
-    privileged: false
-    restart: unless-stopped
-
-  ms4:
-    image: ms/campaign-identifier
-    build: ./microservices/smsh_campaign_identifier
-    container_name: ms4
-    ports:
-      - "8004:8000"
-      - "2204:2222"
     depends_on:
       - mongo
     privileged: false
