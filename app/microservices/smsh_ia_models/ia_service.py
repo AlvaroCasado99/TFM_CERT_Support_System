@@ -1,6 +1,8 @@
 import os
+import re
 import torch
 import json
+import spacy
 
 from pydantic import BaseModel
 from fastapi import FastAPI
@@ -16,6 +18,7 @@ app = FastAPI()
 # Cargar el modelos
 embedder = None
 ner = None
+ner2 = None
 classificator = None
 classes = None
 
@@ -27,6 +30,7 @@ class Request(BaseModel):
 @app.on_event("startup")
 def app_init():
     global ner
+    global ner2
     global classificator
     global classes
     global embedder
@@ -48,6 +52,9 @@ def app_init():
 
     # Cargar modelo de Embeddings
     embedder = SentenceTransformer("all-MiniLM-L6-v2")
+
+    # Cargar modelo NER SPACY para entidades y artefactos
+    ner2 = spacy.load("en_core_web_sm")
 
 # Endpoint que comprueba el mensaje
 @app.post("/check")
@@ -90,3 +97,21 @@ def smsh_embedding(req: Request):
             "embeddings": embeddings,
             "norm_embeddings": norm_embeddings
             }
+
+
+
+# Endpoint que devuelve diferentes artefactos presentes en un mensaje; como urls, correos, telefonos...
+@app.post("/artifacts")
+def smsh_artifacts(req: Request):
+    msg = req.msg
+    results = {
+        "emails": set(),
+        "phones": set(),
+        "urls": set()
+            }
+    
+    # SpaCy NER
+    doc = ner2(msg)
+    print(doc)
+    print(doc.ents)
+    return results

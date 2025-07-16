@@ -45,6 +45,9 @@ RUN python3 -m venv /venv && \
 	/venv/bin/pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
 	/venv/bin/pip3 install -r requirements.txt
 
+# Descargar modelo spacy
+RUN python3 -m spacy download en_core_web_sm
+
 # Elimino la cache para alivianar la imagen
 RUN rm -rf /root/.cache/pip
 

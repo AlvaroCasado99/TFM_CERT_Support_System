@@ -47,7 +47,7 @@ def smhs_type(req: Request):
         print(f"{i+1}. Score: {score:.4f} | ID: {db_embeddings['_id'][idx]}")
 
     # Filtrar por umbral
-    threshold = 0.80
+    threshold = 0.85
 
     # La más representada será la elegida, si no hay ninguna se genera una nueva
     
