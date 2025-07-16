@@ -18,7 +18,6 @@ app = FastAPI()
 # Cargar el modelos
 embedder = None
 ner = None
-ner2 = None
 classificator = None
 classes = None
 
@@ -45,16 +44,13 @@ def app_init():
     with open(f"{model_path}/training_args.json", "r") as f:
         classes = json.load(f)['labels_list']
 
-    # Cargar modelo NER
-    tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
-    ner_model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
-    ner = pipeline("ner", model=ner_model, tokenizer=tokenizer)
-
     # Cargar modelo de Embeddings
     embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
     # Cargar modelo NER SPACY para entidades y artefactos
-    ner2 = spacy.load("en_core_web_sm")
+    ner = spacy.load("en_core_web_sm")
+
+
 
 # Endpoint que comprueba el mensaje
 @app.post("/check")
@@ -68,17 +64,6 @@ def smhs_type(req: Request):
             "predictions": predicted_class
             }
 
-
-# Endpoint que busca entidades dentro de un mensaje
-@app.post("/entity")
-def snsh_ner(req: Request):
-    msg = req.msg
-
-    results = ner(msg)
-    
-    return {
-            "entities": results
-            }
 
 
 # Endpoint que devuleve los embeddings semánticos de un texto para futuras comparaciones
@@ -100,18 +85,33 @@ def smsh_embedding(req: Request):
 
 
 
-# Endpoint que devuelve diferentes artefactos presentes en un mensaje; como urls, correos, telefonos...
-@app.post("/artifacts")
+# Endpoint que devuelve entidades y diferentes artefactos presentes en un mensaje; como urls, correos, telefonos...
+@app.post("/entity")
 def smsh_artifacts(req: Request):
     msg = req.msg
     results = {
         "emails": set(),
         "phones": set(),
-        "urls": set()
-            }
+        "urls": set(),
+        "orgs": set(),
+        "persons": set()
+        }
     
     # SpaCy NER
-    doc = ner2(msg)
-    print(doc)
-    print(doc.ents)
+    doc = ner(msg)
+
+    # Obtención de artefactos
+    for token in doc:
+        if(token.like_url):
+            results["urls"].add(token.text)
+        elif (token.like_email):
+            results["emails"].add(token.text)
+
+    # Obtención de entidades (solo ORG y PERSON)
+    for ent in doc.ents:
+        if(ent.label_ == "ORG"):
+            results["orgs"].add(ent.text)
+        elif(ent.label_ == "PERSON"):
+            results["persons"].add(ent.text)
+
     return results
