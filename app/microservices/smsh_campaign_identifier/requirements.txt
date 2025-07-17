@@ -13,3 +13,6 @@ starlette==0.46.2
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 uvicorn==0.35.0
+numpy==2.3.1
+faiss-cpu==1.11.0
+beanie==1.30.0

@@ -41,41 +41,45 @@ async def _analyse_text(msg):
 
     # Paralelización de las peticiones a los contenedores
     async with httpx.AsyncClient() as client:
-        r1, r2, r3, r4, r5 = await asyncio.gather(
+        r1, r2, r3 = await asyncio.gather(
                 client.post("http://localhost:8001/check", json={"msg": msg}),
                 client.post("http://localhost:8001/entity", json={"msg": msg}),
-                client.post("http://localhost:8001/embedding", json={"msg": msg}),
-                client.post("http://localhost:8002/html", json={"msg": msg}),
-                client.post("http://localhost:8003/campaign", json={"msg": msg}),
+                client.post("http://localhost:8001/embedding", json={"msg": msg})
         )
 
     r1 = r1.json()["predictions"]
-    r2 = r2.json()["entity"]
+    r2 = r2.json()
     r3 = r3.json()
-    r4 = r4.json()["html"]
-    r5 = r5.json()["campaign"]
 
     # Conocer el tipo de smishing
     issue.flavour = r1
 
     # Buscar entidades en el mensaje
-    issue.entity = r2
+    issue.entity = r2["org"][0]
 
     # Obtener los embeddings
-    issue.embedding = r3["embedding"]
-    issue.norm_embedding = r3["norm_embedding"]
+    issue.embeddings = r3["embeddings"]
+    issue.norm_embeddings = r3["norm_embeddings"]
 
     # Identificar URL, MAIL, PHONE
-    issue.url = "http://URL_de_prueba.com"
-    issue.mail = "mqil@example.com"
-    issue.phone = "987-54-12-54"
+    issue.url = r2["url"]
+    issue.mail = r2["email"]
+    issue.phone = ""
 
     # Obtener código HTML de la URL
-    if issue.url:
-        issue.html = r4
+    print("Voy a buscar el HTML ")
+    if issue.url != "":
+        async with httpx.AsyncClient() as client:
+            response = await client.post("http://localhost:8002/url", json={"url": issue.url})
+        response = response.json()["html"]
+        issue.html = response
 
     # Obtener (si existe campaña asociada)
-    issue.campaign = r5
+    print("Voy a buscar su campaña")
+    async with httpx.AsyncClient() as client:
+        response = await client.post("http://localhost:8003/campaign", json={"embedding": issue.norm_embeddings})
+    response = response.json()["campaign"]
+    issue.campaign = response
 
     # Subir a la base de datos la ISSUE
     message = Smishing(

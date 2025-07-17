@@ -1,9 +1,12 @@
 import os
 
+import numpy as np
+
 from faiss import IndexFlatIP
 from pydantic import BaseModel
-from app.models.smishing import Smishing
 from fastapi import FastAPI
+
+from models.smishing import Smishing
 
 
 # API
@@ -15,26 +18,32 @@ db_embeddings = None
 
 # Modelo para el cuerpo de los requests
 class Request(BaseModel):
-    embedding: list
+    embedding: list[float]
 
 
 # Acciones a realizar al levantar la API
 @app.on_event("startup")
-def app_init():
-    # Obtener los embeddings normalizados de la base de datos
-    db_embeddings = await Smishin.find().to_list()
-    embeddings = db_embeddings["norm_embeddings"]
+async def app_init():
+    global index
+    global db_embeddings
 
-    # Cargar el indice con todos los embedings de mensajes
-    dimension = len(embeddings[0])
-    index = IndexFlatIP(dimension)
-    index.add(embeddings)
+    # Obtener los embeddings normalizados de la base de datos
+    #db_embeddings = await Smishing.find().to_list()
+    #embeddings = [doc["norm_embeddings"] for doc in db_embeddings]
+
+    #embeddings_np = np.array(embeddings).astype("float32")
+    #index = IndexFlatIP(embeddings_np.shape[1])
+    #index.add(embeddings_np)
 
 
 # Endpoint que comprueba el mensaje
 @app.post("/campaign")
 def smhs_type(req: Request):
     embedding = [req.embedding] # Debe ser el vector normalizado
+
+    return {
+            "campaign": "@ilmzdf54zdf54"
+            }
 
     # Buscar los 5 más similares
     head = 5

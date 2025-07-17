@@ -4,10 +4,16 @@ FROM python:3.13-slim
 EXPOSE 8000
 EXPOSE 2222
 
+# Crear un directorio de trabajo
+WORKDIR /app
+
+# Establecer el pythonpath
+ENV PYTHONPATH=/app
+
 # Copiar archivos necesarios
-COPY ./start.sh /start.sh
-COPY ./requirements.txt /requirements.txt
-COPY ./html_grabber_service.py /html_grabber_service.py
+COPY ./microservices/smsh_html_grabber/start.sh /app/
+COPY ./microservices/smsh_html_grabber/requirements.txt /app/
+COPY ./microservices/smsh_html_grabber/html_grabber_service.py /app/
 
 # Dependencies
 RUN apt-get update && apt-get install -y \
@@ -47,6 +53,6 @@ RUN python3 -m venv /venv && \
 RUN rm -rf /root/.cache/pip
 
 # Doy permisos de ejecucion al start
-RUN chmod +x /start.sh
+RUN chmod +x start.sh
 
-CMD ["/start.sh"]
+CMD ["./start.sh"]

@@ -4,6 +4,8 @@ import torch
 import json
 import spacy
 
+import numpy as np
+
 from pydantic import BaseModel
 from fastapi import FastAPI
 
@@ -73,14 +75,14 @@ def smsh_embedding(req: Request):
     
     # Obtener los embedings del mensaje
     embeddings = embedder.encode([msg], convert_to_tensor=False)[0] # Devuelve un tensor en formato de lista
-    embeddings = [float(emb) for emb in embeddings] 
+    embeddings = np.array([float(emb) for emb in embeddings])
 
     # Normalizar los embeddings
-    norm_embeddings = normalize(embeddings, norm='l2')
+    norm_embeddings = normalize(embeddings.reshape(1, -1), norm='l2')
 
     return {
-            "embeddings": embeddings,
-            "norm_embeddings": norm_embeddings
+            "embeddings": embeddings.tolist(),
+            "norm_embeddings": norm_embeddings[0].tolist()
             }
 
 
@@ -90,11 +92,11 @@ def smsh_embedding(req: Request):
 def smsh_artifacts(req: Request):
     msg = req.msg
     results = {
-        "emails": set(),
-        "phones": set(),
-        "urls": set(),
-        "orgs": set(),
-        "persons": set()
+        "email": set(),
+        "phone": set(),
+        "url": set(),
+        "org": set(),
+        "person": set()
         }
     
     # SpaCy NER
@@ -103,15 +105,19 @@ def smsh_artifacts(req: Request):
     # Obtención de artefactos
     for token in doc:
         if(token.like_url):
-            results["urls"].add(token.text)
+            results["url"].add(token.text)
         elif (token.like_email):
-            results["emails"].add(token.text)
+            results["email"].add(token.text)
+
+    # Se espera que solo exista una url/email por mensaje
+    results["url"] = list(results["url"])[0]
+    results["email"] = list(results["email"])[0]
 
     # Obtención de entidades (solo ORG y PERSON)
     for ent in doc.ents:
         if(ent.label_ == "ORG"):
-            results["orgs"].add(ent.text)
+            results["org"].add(ent.text)
         elif(ent.label_ == "PERSON"):
-            results["persons"].add(ent.text)
+            results["person"].add(ent.text)
 
     return results
