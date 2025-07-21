@@ -6,7 +6,10 @@ from faiss import IndexFlatIP
 from pydantic import BaseModel
 from fastapi import FastAPI
 
-from models.smishing import Smishing
+from models.smishing import Smishing, SmishingProjectionFAISS
+
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie, PydanticObjectId
 
 
 # API
@@ -20,6 +23,12 @@ db_embeddings = None
 class Request(BaseModel):
     embedding: list[float]
 
+# Modelo para actualizar indices
+class IndexRequest(BaseModel):
+    id: str
+    norm_embeddings: list[float]
+    campaign: str
+
 
 # Acciones a realizar al levantar la API
 @app.on_event("startup")
@@ -27,40 +36,69 @@ async def app_init():
     global index
     global db_embeddings
 
-    # Obtener los embeddings normalizados de la base de datos
-    #db_embeddings = await Smishing.find().to_list()
-    #embeddings = [doc["norm_embeddings"] for doc in db_embeddings]
+    # Iniciar Beanie
+    client = AsyncIOMotorClient("mongodb://mongo:27017/")
+    await init_beanie(database=client["Phishing"], document_models=[Smishing])
 
-    #embeddings_np = np.array(embeddings).astype("float32")
-    #index = IndexFlatIP(embeddings_np.shape[1])
-    #index.add(embeddings_np)
+    # Obtener los embeddings normalizados de la base de datos
+    db_embeddings = await Smishing.find({}).project(SmishingProjectionFAISS).to_list()
+
+    # Solo crear el índice si hay datos en la BBDD 
+    if db_embeddings:
+        embeddings = [doc.norm_embeddings for doc in db_embeddings]
+        embeddings_np = np.array(embeddings).astype("float32")
+        index = IndexFlatIP(embeddings_np.shape[1])
+        index.add(embeddings_np)
+
+
+# Endpooint para comprobar que esta activo
+@app.post("test")
+def test_api():
+    return {
+            "response": "La API para campañas esta activa"
+            }
+
+# Endpoint para actualizar el índice con un nuevo mensaje
+def update_index(req: IndexRequest):
+    # Actualizo el array de la base de datos
+    db_embeddings.append(
+            SmishingProjectionFAISS(
+                    id=req.id,
+                    norm_embeddings=req.norm_embeddings,
+                    campaign=req.campaign
+                )
+        )
+
+    # Actualizo el índice
+    index.add(req.norm_embeddings)
 
 
 # Endpoint que comprueba el mensaje
 @app.post("/campaign")
 def smhs_type(req: Request):
-    embedding = [req.embedding] # Debe ser el vector normalizado
+    embedding = np.array([req.embedding]).astype("float32") # Debe ser el vector normalizado
 
-    return {
-            "campaign": "@ilmzdf54zdf54"
-            }
+    # Si la base de datos esta vacía
+    if index==None and not db_embeddings:
+        return {"campaign": str(PydanticObjectId())}
 
-    # Buscar los 5 más similares
-    head = 5
-    D, I = index.search(embedding, head)
+    # Buscar los 5 más cercanos
+    campaign = ""
+    threshold = 0.85
+    k = 5
+    D, I = index.search(embedding, k)
 
-    # Comprobar la campaña más representada con una consulta 
-    print(D)
-    print(I)
-    for i, (score, idx) in enumerate(zip(D[0], I[0])):
-        print(f"{i+1}. Score: {score:.4f} | ID: {db_embeddings['_id'][idx]}")
+    # Comprobar la campaña más representada con una consulta
+    search_results = zip(D[0], I[0])
+    best_idx = I[0][0]
+    best_score = [0][0] 
 
     # Filtrar por umbral
-    threshold = 0.85
-
-    # La más representada será la elegida, si no hay ninguna se genera una nueva
-    
+    if best_score >= threshold:
+        campaign = db_embeddings[best_idx].campaign
+    else:
+        campaign = str(PydanticObjectId())
 
     return {
-            "campaign": "La de verano"
+            "campaign": campaign
             }

@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from app.models.requests import Item
 
-from app.api.controllers.message_analysis_controller import advanced_text_analysis
+from app.api.controllers.message_analysis_controller import advanced_text_analysis, db_test
 
 # Router
 router = APIRouter()
@@ -14,6 +14,11 @@ def get_analysis_test():
     return {
             "message": "Router /analysis funciona!"
             }
+
+# DELETE: Endpoint para testear beanie
+@router.get("/beanie")
+async def beanie_test():
+    return await db_test()
 
 
 # Endpoint para análisis AVANZADO de mensajes de texto

@@ -2,7 +2,23 @@ import httpx
 import asyncio
 
 from app.models.issue import Issue
-from app.models.smishing import Smishing
+from app.models.smishing import Smishing, SmishingProjectionFAISS
+
+
+
+"""
+    DELETE:
+    Para probar como funciona beanie
+"""
+async def db_test():
+    results = await Smishing.find({}).project(SmishingProjectionFAISS).to_list()
+    
+
+    for idx, doc in enumerate(results):
+        print(results[idx].id)
+    return {
+            "results": results
+            }
 
 
 """
@@ -25,6 +41,16 @@ async def advanced_text_analysis(msg):
         return await _analyse_text(msg)
 
 
+"""
+    Función interna: NO IMPORTAR
+    Controla la concurrencia para peticiones con asyncio gather
+"""
+semaforo = asyncio.Semaphore(5)
+async def _limited_request(url, data):
+    async with semaforo:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            return await client.post(url, json=data)
+
 
 """
     Función interna: NO IMPORTAR
@@ -40,12 +66,13 @@ async def _analyse_text(msg):
     issue.msg = msg
 
     # Paralelización de las peticiones a los contenedores
-    async with httpx.AsyncClient() as client:
-        r1, r2, r3 = await asyncio.gather(
-                client.post("http://localhost:8001/check", json={"msg": msg}),
-                client.post("http://localhost:8001/entity", json={"msg": msg}),
-                client.post("http://localhost:8001/embedding", json={"msg": msg})
-        )
+    r1, r2, r3 = await asyncio.gather(
+        _limited_request("http://localhost:8001/check", {"msg": msg}),
+        _limited_request("http://localhost:8001/entity", {"msg": msg}),
+        _limited_request("http://localhost:8001/embedding", {"msg": msg})
+    )
+
+    print(r2)
 
     r1 = r1.json()["predictions"]
     r2 = r2.json()
@@ -78,6 +105,8 @@ async def _analyse_text(msg):
     print("Voy a buscar su campaña")
     async with httpx.AsyncClient() as client:
         response = await client.post("http://localhost:8003/campaign", json={"embedding": issue.norm_embeddings})
+
+    print(response)
     response = response.json()["campaign"]
     issue.campaign = response
 

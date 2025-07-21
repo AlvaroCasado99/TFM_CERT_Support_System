@@ -14,5 +14,7 @@ ml/
 # ignorar modelos
 bert_classifier/
 
-# Ignorar test.sh
+# Ignorar archivos
 test.sh
+MIMICS-3500-v1.xlsx
+data_loader.py

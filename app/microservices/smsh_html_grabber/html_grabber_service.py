@@ -21,15 +21,17 @@ async def smhs_type(req: Request):
     html = ""
     
     # Comprobar si la URL sigue activa con un tiempo de espera fijo
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url, timeout=10.0)
-            if response.status_code == 200:
-                html = response.text
-        except httpx.ConnectError as e:
-            print(f"Hubo un problema al intentar conectar con {url}: {e}")
-        except httpx.UnsupportedProtocol as e:
-            print(f"Hubo con el protocolo de la url '{url}': {e}")
+    #async with httpx.AsyncClient() as client:
+    #    try:
+    #        response = await client.get(url, timeout=10.0)
+    #        if response.status_code == 200:
+    #            html = response.text
+    #    except httpx.ConnectError as e:
+    #        print(f"[ERROR] Hubo un problema al intentar conectar con {url}: \n{e}")
+    #    except httpx.UnsupportedProtocol as e:
+    #        print(f"[ERROR] Hubo con el protocolo de la url '{url}': \n{e}")
+    #    except httpx.ReadTimeout as e:
+    #        print(f"[ERROR] No se pudo conetar con '{url}', se excedió el tiempo de espera. Por favor compruebe su conexión. \n{e}")
 
     return {
             "html": html

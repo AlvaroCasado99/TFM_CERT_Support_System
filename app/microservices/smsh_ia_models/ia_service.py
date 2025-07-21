@@ -110,8 +110,18 @@ def smsh_artifacts(req: Request):
             results["email"].add(token.text)
 
     # Se espera que solo exista una url/email por mensaje
-    results["url"] = list(results["url"])[0]
-    results["email"] = list(results["email"])[0]
+    if results['url']:
+        results['url'] = list(results['url'])[0]
+    else:
+        results['url'] = ""
+
+    if results['email']:
+        results['email'] = list(results['email'])[0]
+    else:
+        results['email'] = ""
+        
+    #results["url"] = results['url'] ? list(results["url"])[0] : ""
+    #results["email"] = results['email'] ? list(results["email"])[0] : ""
 
     # Obtención de entidades (solo ORG y PERSON)
     for ent in doc.ents:
