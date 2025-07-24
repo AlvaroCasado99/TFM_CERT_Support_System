@@ -19,6 +19,10 @@ services:
     ports:
       - "8001:8000"
       - "2201:2222"
+    volumes:
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./logger_config:/app/logger_config
     privileged: false
     restart: unless-stopped
 
@@ -32,6 +36,10 @@ services:
     ports:
       - "8002:8000"
       - "2202:2222"
+    volumes:
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./logger_config:/app/logger_config
     privileged: false
     restart: unless-stopped
 
@@ -45,6 +53,10 @@ services:
     ports:
       - "8003:8000"
       - "2203:2222"
+    volumes:
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./logger_config:/app/logger_config
     depends_on:
       - mongo
     privileged: false

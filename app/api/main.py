@@ -2,9 +2,14 @@
 from fastapi import FastAPI
 from app.api.routes import analysis, report_router
 from app.db.db import init_db
+from app.logger_config.setup_logger import setup_logger
 
 
 app = FastAPI()
+
+# Lanzar el logger
+logger = setup_logger("API", "api.log")
+logger.info("API arrancando")
 
 # Acciones que deben realizarse al lanzar la API
 @app.on_event("startup")

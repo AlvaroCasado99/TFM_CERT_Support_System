@@ -14,8 +14,14 @@ from transformers import pipeline
 from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import normalize
 
+from logger_config.setup_logger import setup_logger
+
 # API
 app = FastAPI()
+
+# Logger
+logger = setup_logger("MS1", "ia_service.log", "./logs")
+logger.info("Arrancando el servicio MS1 (IA)")
 
 # Cargar el modelos
 embedder = None
@@ -63,7 +69,7 @@ def smhs_type(req: Request):
     predicted_class = classes[int(predictions[0]['label'].split('_')[1])]
 
     return {
-            "predictions": predicted_class
+            "result": predicted_class
             }
 
 
@@ -81,8 +87,10 @@ def smsh_embedding(req: Request):
     norm_embeddings = normalize(embeddings.reshape(1, -1), norm='l2')
 
     return {
-            "embeddings": embeddings.tolist(),
-            "norm_embeddings": norm_embeddings[0].tolist()
+            "result": {
+                    "embeddings": embeddings.tolist(),
+                    "norm_embeddings": norm_embeddings[0].tolist()
+                }
             }
 
 
@@ -130,4 +138,6 @@ def smsh_artifacts(req: Request):
         elif(ent.label_ == "PERSON"):
             results["person"].add(ent.text)
 
-    return results
+    return {
+            "result": results
+            }

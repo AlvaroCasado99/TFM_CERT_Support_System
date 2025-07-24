@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from beanie import Document, PydanticObjectId
 from typing import Optional
 from bson import ObjectId
+from datetime import datetime
 
 class Smishing(Document):
     msg: str
@@ -13,14 +14,15 @@ class Smishing(Document):
     html: Optional[str]
     embeddings: list
     norm_embeddings: list
-    campaign: Optional[str]
+    campaign: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
         name = "smishing"   # Nombre de la coleccion en mongo
 
 
 class SmishingProjectionFAISS(BaseModel):
-    id: PydanticObjectId = Field(alias="_id")
+    #id: PydanticObjectId = Field(alias="_id")
     norm_embeddings: list
     campaign: str
 

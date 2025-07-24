@@ -14,7 +14,7 @@ ENV PYTHONPATH=/app
 COPY ./microservices/smsh_campaign_identifier/start.sh /app/
 COPY ./microservices/smsh_campaign_identifier/requirements.txt /app/
 COPY ./microservices/smsh_campaign_identifier/campaign_identifier_service.py /app/
-COPY ./models /app/models
+#COPY ./models /app/models
 
 # Dependencies
 RUN apt-get update && apt-get install -y \
