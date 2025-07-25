@@ -1,10 +1,15 @@
 import httpx
 import asyncio
+import logging
 
 from app.models.issue import Issue
 from app.models.smishing import Smishing, SmishingProjectionFAISS
 
 from beanie import PydanticObjectId
+
+
+# Obtener el logger
+logger = logging.getLogger("API")
 
 
 

@@ -1,6 +1,6 @@
 # This is the point of entry to my api
 from fastapi import FastAPI
-from app.api.routes import analysis, report_router
+from app.api.routes import analysis, report_router, user_router
 from app.db.db import init_db
 from app.logger_config.setup_logger import setup_logger
 
@@ -19,6 +19,7 @@ async def app_init():
 # Routers
 app.include_router(analysis.router, prefix='/analyse')
 app.include_router(report_router.router, prefix='/report')
+app.include_router(user_router.router, prefix='/user')
 
 # Tensting endpoint
 @app.get("/test") 

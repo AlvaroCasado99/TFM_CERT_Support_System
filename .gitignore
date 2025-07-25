@@ -11,6 +11,9 @@ ml/
 # Ignorar archivos temporales
 *.swp
 
+# Ignorar logs
+*.log
+
 # ignorar modelos
 bert_classifier/
 
