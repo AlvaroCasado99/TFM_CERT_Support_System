@@ -6,6 +6,8 @@ from pages.login import login_view, logout
 from pages.dashboard import dashboard_view
 from pages.smishing import smishing_view
 
+logger = setup_logger("frontend", "frontend.log", "./logs")
+logger.info("Arrancando streamlit.")
 
 def main():
     # Inicializar varibles de sesion
@@ -36,6 +38,4 @@ def main():
     pg.run()
 
 if __name__ == "__main__":
-    logger = setup_logger("frontend", "frontend.log", "./logs")
-    logger.info("Arrancando streamlit.")
     main()

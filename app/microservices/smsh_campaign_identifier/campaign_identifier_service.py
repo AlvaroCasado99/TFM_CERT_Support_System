@@ -161,7 +161,7 @@ def smhs_type(req: Request):
 
     # Si la base de datos esta vacía
     if index==None and not db_embeddings:
-        return {"campaign": str(PydanticObjectId())}
+        return {"result": str(PydanticObjectId())}
 
     # Buscar los 5 más cercanos
     campaign = ""

@@ -33,18 +33,20 @@ async def db_test():
     y delega el proceso de análisis a la función interna: _analyse_text.
 """
 async def advanced_text_analysis(msg):
+    logger.info("Iniciando procesamiento de datos...")
     if isinstance(msg, list):
+        print("Voy a procesar una lista")
         # Loop entre cada mensaje
         results = list()
         for m in msg:
+            print(f"MSG: {m}\n")
             msg_info = await _analyse_text(m)
             results.append(msg_info)
 
-        return {
-                "results": results
-                }
+        return results
 
     else:
+        print("Voy a procesar un mensaje único.")
         return await _analyse_text(msg)
 
 
@@ -62,21 +64,24 @@ async def _limited_post_request(url, data, timeout=30.0):
     Función interna: NO IMPORTA
     Contiene la lógica para hacer peticiones a microservicios de forma no concurrente
 """
-async def _normal_post_request(url, data, timeout=5.0):
+async def _normal_post_request(url, data, timeout=10.0):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=data, timeout=timeout)
             response.raise_for_status() # Verificar que no sea un error 4xx/5xx
-
             return response.json()["result"]
     except httpx.ConnectError:
-        print("[ERROR]: No se pudo conectar con el servicio de HTML")
+        print("[ERROR]: No se pudo conectar con el servicio.")
     except httpx.ReadTimeout:
-        print("[ERROR]: No se pudo conectar con el servicio HTML, se excedió el tiempo de espera")
+        print("[ERROR]: No se pudo conectar con el servicio, se excedió el tiempo de espera")
     except httpx.HTTPStatusError as e:
-        print(f"[ERROR]: El microservicio HTML respondió con el error HTTP: {e.response.status_code}")
+        print(f"[ERROR]: El microservicio respondió con el error HTTP: {e.response.status_code}")
     except httpx.RequestError as e:
         print(f"[ERROR]: Error general en la peticion: {e}")
+    except httpx.ReadTimeout as e:
+        print(f"[ERROR]: Se excedió el tiempo para la url: {url}")
+    except Exception as e:
+        print(f"[ERROR]: Ha ocurrido un error inesperado: {e}")
 
 
 
@@ -100,11 +105,14 @@ async def _analyse_text(msg):
         _limited_post_request("http://localhost:8001/embedding", {"msg": msg})
     )
 
+    print(entities)
+
     # Conocer el tipo de smishing
     issue.flavour = preds
 
     # Buscar entidades en el mensaje
-    issue.entity = entities["org"][0]
+    if entities["org"]:
+        issue.entity = entities["org"][0]
 
     # Obtener los embeddings
     issue.embeddings = embeds["embeddings"]
@@ -118,18 +126,20 @@ async def _analyse_text(msg):
     # Obtener código HTML de la URL
     print("Voy a buscar el HTML ")
     if issue.url != "":
-        issue.html = await _normal_post_request(
+        html = await _normal_post_request(
                 url="http://localhost:8002/url", 
                 data={"url": issue.url}, 
-                timeout=5.0
+                timeout=10.0
             )
+        print(f"HTML: {html}")
+        issue.html = html
 
-    # Obtener (si existe campaña asociada)
+    # Obtener (si existe) campaña asociada
     print("Voy a buscar su campaña")
     issue.campaign = await _normal_post_request(
             url="http://localhost:8003/campaign", 
             data={"embedding": issue.norm_embeddings}, 
-            timeout=5.0
+            timeout=10.0
         )
     
     # Actualizar el índice con los mensajes
