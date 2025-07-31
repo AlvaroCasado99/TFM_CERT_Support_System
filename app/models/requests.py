@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
@@ -19,3 +20,14 @@ class Report(BaseModel):
     html: Optional[str]
     embeddings: list
     campaign: Optional[str]
+
+"""
+    Modelo para los requests a /graph
+"""
+class GraphRequest(BaseModel):
+    start: datetime
+    end: datetime
+    interval: Optional[str] = None
+    classtype: Optional[str] = None
+
+

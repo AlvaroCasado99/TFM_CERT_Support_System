@@ -26,3 +26,12 @@ class SmishingProjectionFAISS(BaseModel):
     norm_embeddings: list
     campaign: str
 
+class SmishingProjectionGraphCategory(BaseModel):
+    flavour: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SmishingProjectionGraphOrganizationCategory(BaseModel):
+    flavour: str
+    entity: Optional[str] | Optional[list]
+    #created_at: datetime = Field(default_factory=datetime.utcnow)
+

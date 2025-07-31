@@ -1,13 +1,13 @@
-def smishing_report_template(data, user):
-    def format_report_body(data, user, body):
-        print(user)
-        page = body.replace("{{date}}", "XXXX")
+
+def smishing_report_template(data, user, timestamp):
+    def format_report_body(data, user, body, timestamp):
+        page = body.replace("{{date}}", timestamp)
         page = page.replace("{{name}}", user['name'])
         page = page.replace("{{surname}}", user['surname'])
         page = page.replace("{{message}}", data['msg'])
         page = page.replace("{{flavour}}", data['flavour'])
         page = page.replace("{{campaign}}", data['campaign'])
-        page = page.replace("{{persons}}", "XXXX")
+        #page = page.replace("{{persons}}", "XXXX")
         page = page.replace("{{orgs}}", data['entity'] if data['entity'] else "-")
         page = page.replace("{{email}}", data['mail'] if data['mail'] else "-")
         page = page.replace("{{url}}", data['url'] if data['url'] else "-")
@@ -102,7 +102,7 @@ def smishing_report_template(data, user):
 
         <section>
             <h2>Entidades identificadas</h2>
-            <p><span class="label">Personas:</span> {{persons}}</p>
+            <!-- <p><span class="label">Personas:</span> {{persons}}</p> -->
             <p><span class="label">Organizaciones:</span> {{orgs}}</p>
         </section>
 
@@ -121,9 +121,9 @@ def smishing_report_template(data, user):
     page_break = """\n<div class="page-break"></div>\n"""
 
     if isinstance(data, list):
-        pages = [format_report_body(d, user, body) for d in data]
+        pages = [format_report_body(d, user, body, timestamp) for d in data]
         joined_pages = page_break.join(pages)
         return template.replace("{{body}}", joined_pages)
     else:
-        page = format_report_body(data, user, body)
+        page = format_report_body(data, user, body, timestamp)
         return template.replace("{{body}}", page)
