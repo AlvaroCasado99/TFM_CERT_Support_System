@@ -1,53 +1,13 @@
-import httpx
-import io
 import logging
 import streamlit as st
 import pandas as pd
 
-from weasyprint import HTML
-
-from web.resources.templates import smishing_report_template
-from web.resources.utils import get_current_timestamp
+import web.services.smishing_data_services as sds
+import web.services.smishing_processing_services as sps
+from web.templates.pdf_generator import smishing_report_generator
 
 # Iniciar el logger
 logger = logging.getLogger("frontend")
-
-# Devuelve un reporte listo para mustrar en la web
-def generate_pdf(data):
-    logger.info("Voy a generar un reporte con los datos")
-    html = smishing_report_template(data, st.session_state.user, get_current_timestamp())
-    pdf_io = io.BytesIO()
-    HTML(string=html).write_pdf(pdf_io)
-
-    return pdf_io.getvalue()
-
-# Procesa el contenido de un dataframe
-def process_messages(content: str | pd.DataFrame):
-    logger.info("Voy a procesar los mensajes del archivo")
-    try:
-        # Si llega un dataframe converirlo a lista
-        if isinstance(content, pd.DataFrame):
-            content = content["TEXT"].to_list()
-        # Lanzar peticion a la API
-        with httpx.Client() as client:
-            res = httpx.post("http://localhost:8000/analyse/text/advanced", json={"msg":content}, timeout=120)
-            res.raise_for_status()
-            return {"ok": True,  "data": res.json()}
-    except httpx.RequestError as e:
-        print(f"Request Error {e}")
-        return {"ok": False, "error": "Error de conexión. Inténtelo más tarde."}
-    except httpx.HTTPStatusError as e:
-        status_code = e.response.status_code
-        print(f"He recogido este error: {status_code}")
-        if status_code >= 500:
-            return {"ok": False, "error": "Error del servidor. Inténtelo más tarde."}
-        else:
-            return {"ok": False, "error": f"Ha ocurrido un error inesperado ({status_code})."}
-    except KeyError:
-        return {"ok": False, "error": "La columna con los mensajes debe llamarse TEXT."}
-    except Exception as e:
-        return {"ok": False, "error": f"Ha ocurrido un error inesperado ({e})."}
-
 
 # Panel de lectura de documentos
 def smishing_view():
@@ -61,13 +21,20 @@ def smishing_view():
     with st.container():
         if seg=="Único":
             text = st.text_area("Introduce aquí el mensaje:", "", height=100)
-            
-            if st.button("Procesar"):
-                # Procesar contenido
+
+            # Validar el mensaje
+            process_btn = None
+            valid = sps.process_single_message(text)
+
+            if not valid['ok']:
+                st.error(valid['error'])
+
+            # Procesar contenido
+            if st.button('Procesar') and valid['ok']:
                 if not text:
                     st.error("Debes introducir un mensaje.")
                 else:
-                    result = process_messages(text)
+                    result = sds.get_analysis_data(text)
 
                 # Comprobar resultados
                 if result['ok']:
@@ -77,7 +44,7 @@ def smishing_view():
                     # Print del reporte
                     st.download_button(
                         label="📄 Descargar PDF",
-                        data=generate_pdf(data),
+                        data=smishing_report_generator(data=data, user=st.session_state.user),
                         file_name="reporte.pdf",
                         mime="application/pdf"
                         )
@@ -92,6 +59,7 @@ def smishing_view():
                         - **Tipo:** {data['flavour']}
                         - **Entidades:** {data['entity']}
                         - **URL:** {data['url']}
+                        - **Campaña:** {data['campaign']}
                         """)
 
                 else:
@@ -102,20 +70,36 @@ def smishing_view():
 
     with st.container():
         if seg=="Múltiple":
-            uploaded_file = st.file_uploader("Sube un archivo CSV o XLSX", type=["csv", "xlsx"])
+            uploaded_file = st.file_uploader("Sube un archivo CSV o XLSX", type=["csv", "xlsx"], help="Sube un archivo CSV o XLSX con la columna TEXT conteniendo los mensajes.")
             if uploaded_file:
-                logger.info("Se subión un archivo para analizar mensajes.")
-        
-                # Leer archivo
-                if uploaded_file.name.endswith(".csv"):
-                    df = pd.read_csv(uploaded_file)
-                elif uploaded_file.name.endswith(".xlsx"):
-                    df = pd.read_excel(uploaded_file)
+                logger.info("Se subió un archivo para analizar mensajes.")
 
+                # Llamar al validador
+                df = None
+                process_btn = None
+                valid = sps.process_multiple_messages(uploaded_file)
+
+                if valid['ok']:
+                    df = valid['result']
+
+                    # Avisar si se han filtrado mensajes
+                    if valid['warn']:
+                        st.warning(valid['warn'])
+
+                    # Revisar si quedan mensajes
+                    if df.empty:
+                        st.error("No hay mensajes dentro del archivo")
+                    else:
+                        process_btn = st.button('Procesar')
+                else:
+                    st.error(valid['error'])
+        
                 # Esperar a que el usuario envie el contenido
                 data = None
-                if st.button("Procesar"):
-                    result = process_messages(df)
+                if process_btn:
+                    messages = df['TEXT'].to_list()
+                    result = sds.get_analysis_data(messages)
+
                     if result['ok']:
                         data = result['data']
                         processed = True
@@ -123,7 +107,7 @@ def smishing_view():
                         # Print del reporte
                         st.download_button(
                             label="📄 Descargar PDF",
-                            data=generate_pdf(data),
+                            data=smishing_report_generator(data=data, user=st.session_state.user),
                             file_name="reporte.pdf",
                             mime="application/pdf"
                         )
@@ -139,6 +123,7 @@ def smishing_view():
                                 - **Tipo:** {msg['flavour']}
                                 - **Entidades:** {msg['entity']}
                                 - **URL:** {msg['url']}
+                                - **Campaña:** {msg['campaign']}
                                 """)
                     else:
                         st.error(result['error'])

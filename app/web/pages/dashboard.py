@@ -1,35 +1,8 @@
 import streamlit as st
 
-from datetime import datetime, timedelta
-from web.resources import graphics as gp
-
-INTERVAL_CODE = {
-        "Hoy":'H',
-        "7 días":'D',
-        "Mes":'D',
-        "Año": 'W',
-        "Todo": 'M'
-    }
-
-# Devuleve un rango de fechas segun las opciones disponibles
-def obtener_rango_fechas(rango: str) -> tuple[datetime, datetime]:
-    ahora = datetime.now()
-
-    if rango == "Hoy":
-        inicio = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
-    elif rango == "7 días":
-        inicio = (ahora - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
-    elif rango == "Mes":
-        inicio = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    elif rango == "Año":
-        inicio = ahora.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    elif rango == "Todo":
-        inicio = datetime(2000, 1, 1)
-    else:
-        raise ValueError(f"Rango no reconocido: {rango}")
-
-    fin = ahora
-    return inicio, fin
+import web.visualization.chart_generator as cg
+from web.utils.datetime_utils import obtener_rango_fechas
+from web.utils.constants import INTERVAL_CODE
 
 # Panel de gráficos
 def dashboard_view():
@@ -45,22 +18,21 @@ def dashboard_view():
     with col2:
         inicio, fin = obtener_rango_fechas(period)
         if graph == "Tarta":
-            fig, tag = gp.smishing_categories_pie_chart(period={'start': inicio, "end": fin})
+            fig, tag = cg.smishing_categories_pie_chart(period={'start': inicio, "end": fin})
             st.pyplot(fig)
         elif graph == "Barras":
-            fig, tag = gp.smishing_categories_bar_graph(
+            fig, tag = cg.smishing_categories_bar_graph(
                     period={'start': inicio, "end": fin}, 
                     interval = INTERVAL_CODE[period]
                 )
             st.pyplot(fig)
         elif graph == "Organizaciones":
-            fig, tag = gp.organizations_bar_graph(
+            fig, tag = cg.organizations_categories_bar_graph(
                     period={'start': inicio, "end": fin} 
                 )
             st.pyplot(fig)
         elif graph == "Palabras":
-            fig, tag = gp.smishing_categories_bar_graph(
-                    period={'start': inicio, "end": fin}, 
-                    interval = INTERVAL_CODE[period]
+            fig, tag = cg.smishing_word_cloud(
+                    period={'start': inicio, "end": fin}
                 )
             st.pyplot(fig)

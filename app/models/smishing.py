@@ -35,3 +35,5 @@ class SmishingProjectionGraphOrganizationCategory(BaseModel):
     entity: Optional[str] | Optional[list]
     #created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class SmishingProjectionGraphMessages(BaseModel):
+    msg: str
