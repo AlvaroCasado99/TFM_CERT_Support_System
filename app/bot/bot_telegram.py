@@ -88,6 +88,61 @@ async def start_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(responses[DEFAULT_LENG]["smsh_ready"])
     return STATE_SMS
 
+
+"""
+    Genera una respuesta en función del resultado de un mensaje.
+"""
+def _generate_response(data, lang: str ="es"):
+    response = ""
+
+    if data["flavour"] == "ham":
+        response = responses[lang]["smsh_safe"]
+    
+    else:
+        # Construir la respuesta con los datos
+        response = "\n" + responses[lang]["smsh_flavour"].replace("$$FLAVOUR$$", data["flavour"]) + "\n"
+        if isinstance(data['entity'], str):
+            response += "\n" +  responses[lang]["smsh_entity"].replace("$$ENTITY$$", data["entity"]) + "\n"
+        else:
+            response += "\n" + responses[lang]["smsh_entities"].replace("$$ENTITIES$$", ", ".join(data["entity"])) + "\n"
+
+        if data['url']:
+            response += "\n" + responses[lang]["smsh_url"] + "\n"
+    
+        response = responses[lang]["smsh_result"] + "\n" + response
+
+    return response
+
+"""
+    Hace la peticion a la api para analizar un mensaje
+"""
+async def _analyse_message(msg: str):
+    try:
+        # Lanzar peticion a la API
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                "http://localhost:8000/analyse/text/advanced",
+                json={"msg": msg}
+            )
+        
+        res.raise_for_status()
+        return {"ok": True,  "data": res.json()}
+    
+    except httpx.RequestError as e:
+        print(f"Request Error {e}")
+        return {"ok": False, "error": "Error de conexión. Inténtelo más tarde."}
+
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
+        print(f"He recogido este error: {status_code} -> {e}")
+        if status_code >= 500:
+            return {"ok": False, "error": "Error del servidor. Inténtelo más tarde."}
+        else:
+            return {"ok": False, "error": f"Ha ocurrido un error inesperado ({status_code})."}
+    except Exception as e:
+        return {"ok": False, "error": f"Ha ocurrido un error inesperado ({e})."}
+
+
 """
     No es un comando:
     En esta función se ejecuta la lógica para la conversación de procesar un mensaje de texto
@@ -97,29 +152,19 @@ async def start_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def process_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(responses[DEFAULT_LENG]["smsh_go"])
     msg = update.message.text
+    response = ""
 
     # Petición a la API
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "http://localhost:8000/analyse/text/advanced",
-            json={"msg": msg}
-        )
+    result = await _analyse_message(msg)
 
-    status_code = response.status_code
-    result = response.json()
-
-    # Construir la respuesta con los datos
-    response = "\n" + responses[DEFAULT_LENG]["smsh_flavour"].replace("$$FLAVOUR$$", result["flavour"]) + "\n"
-    if isinstance(result['entity'], str):
-        response += "\n" +  responses[DEFAULT_LENG]["smsh_entity"].replace("$$ENTITY$$", result["entity"]) + "\n"
+    # Contruir la respuesta
+    if result['ok']:
+        response = _generate_response(result['data'], lang=DEFAULT_LENG)
     else:
-        response += "\n" + responses[DEFAULT_LENG]["smsh_entities"].replace("$$ENTITIES$$", ", ".join(result["entity"])) + "\n"
+        print(result['error'])
+        response = responses[DEFAULT_LENG]['smsh_error']
 
-    if result['url']:
-        response += "\n" + responses[DEFAULT_LENG]["smsh_url"] + "\n"
-    
-    response = responses[DEFAULT_LENG]["smsh_result"] + "\n" + response 
-
+    # Mostrar la respuesta
     await update.message.reply_text(response)
     
     return ConversationHandler.END

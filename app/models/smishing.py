@@ -7,6 +7,7 @@ from datetime import datetime
 class Smishing(Document):
     msg: str
     flavour: str
+    flavour_13c: str
     entity: Optional[str] | Optional[list]
     url: Optional[str]
     mail: Optional[str]

@@ -1,9 +1,10 @@
 # Clase para cada mensaje
 class Issue:
     # Constructor de la clase
-    def __init__(self, msg = "", flavour = "", entity = "", url = "", mail = "", phone = "", html = "", embeddings = [], norm_embeddings = [], campaign = ""):
+    def __init__(self, msg = "", flavour = "", flavour_13c = "", entity = "", url = "", mail = "", phone = "", html = "", embeddings = [], norm_embeddings = [], campaign = ""):
         self.msg = msg 
-        self.flavour = flavour 
+        self.flavour = flavour
+        self.flavour_13c = flavour_13c
         self.entity = entity 
         self.url = url 
         self.mail = mail 
@@ -32,6 +33,17 @@ class Issue:
         if not isinstance(valor, str):
             raise TypeError("flavour debe ser una cadena.")
         self._flavour = valor
+
+    @property
+    def flavour_13c(self) -> str:
+        return self._flavour_13c
+
+    @flavour_13c.setter
+    def flavour_13c(self, valor: str):
+        if not isinstance(valor, str):
+            raise TypeError("flavour debe ser una cadena.")
+        self._flavour_13c = valor
+
 
     @property
     def entity(self) -> str:
@@ -132,6 +144,7 @@ class Issue:
         return {
                 "msg": self._msg ,
                 "flavour": self._flavour ,
+                "flavour_13c": self._flavour_13c ,
                 "entity": self._entity ,
                 "url": self._url ,
                 "mail": self._mail ,

@@ -14,43 +14,87 @@ from transformers import pipeline
 from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import normalize
 
-from logger_config.setup_logger import setup_logger
+#from logger_config.setup_logger import setup_logger
 
 # API
 app = FastAPI()
 
 # Logger
-logger = setup_logger("MS1", "ia_service.log", "./logs")
-logger.info("Arrancando el servicio MS1 (IA)")
+#logger = setup_logger("MS1", "ia_service.log", "./logs")
+#logger.info("Arrancando el servicio MS1 (IA)")
 
 # Cargar el modelos
 embedder = None
 ner = None
-classificator = None
-classes = None
+class_bin = None
+class_7c = None
+class_13c = None
+
+#classificator = None
+#classes = None
 
 # Modelo para el cuerpo de los requests
 class Request(BaseModel):
     msg: str
 
+
+# Objeto clasificado
+class Classifier():
+
+    """ Constructor """
+    def __init__(self, model_path:str="./bert_classifier", tokenizer:bool=False):
+        self.model_path=model_path
+        self.tokenizer_path=model_path if tokenizer else "bert-base-uncased"
+
+        # Inicializamos al crear la instancia
+        self.classifier = self._load_classifier()
+        self.id2label = self._load_id2label()
+
+    def _load_classifier(self):
+        model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
+        tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_path)
+        tokenizer.model_max_length = 256
+        return pipeline("text-classification", model=model, tokenizer=tokenizer)
+
+    def _load_id2label(self):
+        with open(f"{self.model_path}/config.json", "r") as f:
+            return json.load(f)['id2label']
+
+    """ Predecir mensajes """
+    def classify(self, msg: str=""):
+        #predictions = self.classifier(msg, truncation=True, max_length=256, padding=True)
+        predictions = self.classifier(msg)
+        print(predictions)
+        label = predictions[0]['label']
+        return label
+
+
 # Acciones a realizar al levantar la API
 @app.on_event("startup")
 def app_init():
+    #global classificator
+    #global classes
     global ner
-    global ner2
-    global classificator
-    global classes
     global embedder
+    global class_bin
+    global class_7c
+    global class_13c
+
     
     # Cargar modelo clasificador
-    model_path = './bert_classifier'
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    class_model = AutoModelForSequenceClassification.from_pretrained(model_path)
-    classificator = pipeline("text-classification", model=class_model, tokenizer=tokenizer)
+#    model_path = './bert_classifier'
+#    tokenizer = AutoTokenizer.from_pretrained(model_path)
+#    class_model = AutoModelForSequenceClassification.from_pretrained(model_path)
+#    classificator = pipeline("text-classification", model=class_model, tokenizer=tokenizer)
 
     # Obtener el mapa de clases
-    with open(f"{model_path}/training_args.json", "r") as f:
-        classes = json.load(f)['labels_list']
+#    with open(f"{model_path}/config.json", "r") as f:
+#        classes = json.load(f)['labels_list']
+
+    # Cargar modelos de clasificación
+    class_bin = Classifier(model_path = "./bert_binary")
+    class_7c = Classifier(model_path = "./bert_classifier_7c")
+    class_13c = Classifier(model_path = "./bert_classifier_13c")
 
     # Cargar modelo de Embeddings
     embedder = SentenceTransformer("all-MiniLM-L6-v2")
@@ -63,13 +107,23 @@ def app_init():
 # Endpoint que comprueba el mensaje
 @app.post("/check")
 def smhs_type(req: Request):
-    msg = [req.msg]
+#    msg = [req.msg]
+#    predictions = classificator(msg)
+#    predicted_class = classes[int(predictions[0]['label'].split('_')[1])]
 
-    predictions = classificator(msg)
-    predicted_class = classes[int(predictions[0]['label'].split('_')[1])]
+    pred_bin = class_bin.classify(msg=req.msg)
+    pred_7c = "ham"
+    pred_13c = "ham"
+
+    if not pred_bin == "ham":
+        pred_7c = class_7c.classify(msg=req.msg)
+        pred_13c = class_13c.classify(msg=req.msg)
 
     return {
-            "result": predicted_class
+            "result": {
+                    "7c": pred_7c,
+                    "13c": pred_13c
+                }
             }
 
 

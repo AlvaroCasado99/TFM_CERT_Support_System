@@ -108,7 +108,8 @@ async def _analyse_text(msg):
     print(entities)
 
     # Conocer el tipo de smishing
-    issue.flavour = preds
+    issue.flavour = preds['7c']
+    issue.flavour_13c = preds['13c']
 
     # Buscar entidades en el mensaje
     if entities["org"]:
@@ -157,6 +158,7 @@ async def _analyse_text(msg):
     message = Smishing(
             msg = issue.msg,
             flavour = issue.flavour,
+            flavour_13c = issue.flavour_13c,
             entity = issue.entity,
             url = issue.url,
             mail = issue.mail,

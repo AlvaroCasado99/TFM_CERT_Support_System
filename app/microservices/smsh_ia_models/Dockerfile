@@ -14,7 +14,10 @@ ENV PYTHONPATH=/app
 COPY ./microservices/smsh_ia_models/start.sh /app/
 COPY ./microservices/smsh_ia_models/requirements.txt /app/
 COPY ./microservices/smsh_ia_models/ia_service.py /app/
+COPY ./microservices/smsh_ia_models/bert_binary /app/bert_binary
 COPY ./microservices/smsh_ia_models/bert_classifier /app/bert_classifier
+COPY ./microservices/smsh_ia_models/bert_classifier_7c /app/bert_classifier_7c
+COPY ./microservices/smsh_ia_models/bert_classifier_13c /app/bert_classifier_13c
 
 # Dependencies
 RUN apt-get update && apt-get install -y \
