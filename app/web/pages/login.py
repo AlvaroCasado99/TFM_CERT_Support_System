@@ -12,7 +12,7 @@ def login(username, password):
     try:
         with httpx.Client() as client:
             res = client.post(
-                    "http://localhost:8000/user/login", 
+                    "http://api:8000/user/login", 
                     json={"username": username, "password": password}, 
                     timeout=5.0
                 )

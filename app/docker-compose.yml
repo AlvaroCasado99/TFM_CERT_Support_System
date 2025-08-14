@@ -7,14 +7,15 @@ services:
       - "27017:27017"
     volumes:
       - mongodata:/data/db
+    networks:
+      - internal
     restart: unless-stopped
 
   ms1:
-    image: ms/type-detector
+    image: ms1
     build:  
       context: .
       dockerfile: microservices/smsh_ia_models/Dockerfile
-
     container_name: ms1
     ports:
       - "8001:8000"
@@ -23,11 +24,13 @@ services:
       - ./logs:/app/logs
       - ./models:/app/models
       - ./logger_config:/app/logger_config
+    networks:
+      - internal
     privileged: false
     restart: unless-stopped
 
   ms2:
-    image: ms/html-grabber
+    image: ms2
     build:
       context: .
       dockerfile: microservices/smsh_html_grabber/Dockerfile
@@ -40,15 +43,16 @@ services:
       - ./logs:/app/logs
       - ./models:/app/models
       - ./logger_config:/app/logger_config
+    networks:
+      - internal
     privileged: false
     restart: unless-stopped
 
   ms3:
-    image: ms/campaign-identifier
+    image: ms3
     build: 
       context: .
       dockerfile: microservices/smsh_campaign_identifier/Dockerfile
-
     container_name: ms3
     ports:
       - "8003:8000"
@@ -57,10 +61,105 @@ services:
       - ./logs:/app/logs
       - ./models:/app/models
       - ./logger_config:/app/logger_config
+    networks:
+      - internal
     depends_on:
       - mongo
     privileged: false
     restart: unless-stopped
+
+  api:
+    image: api
+    build: 
+      context: .
+      dockerfile: api/Dockerfile
+
+    container_name: api
+    #ports:
+      #- "8000:8000"
+      #- "2204:2222"
+    volumes:
+      - ./db:/app/db
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./logger_config:/app/logger_config
+    networks:
+      - internal
+    env_file:
+      - ../.env
+    depends_on:
+      - mongo
+      - ms1
+      - ms2
+      - ms3
+    privileged: false
+    restart: unless-stopped
+
+  web:
+    image: web
+    build: 
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: web
+    #ports:
+      #- "8501:8501"
+      #- "2205:2222"
+    volumes:
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./logger_config:/app/logger_config
+    networks:
+      - internal
+    env_file:
+      - ../.env
+    depends_on:
+      - api
+    privileged: false
+    restart: unless-stopped
+
+
+  bot:
+    image: bot
+    build: 
+      context: .
+      dockerfile: bot/Dockerfile
+    container_name: bot
+    ports:
+      - "2206:2222"
+    volumes:
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./logger_config:/app/logger_config
+    networks:
+      - internal
+    env_file:
+      - ../.env
+    depends_on:
+      - api
+    privileged: false
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - web
+    privileged: false
+    restart: unless-stopped
+    networks:
+      - internal
+      - external
+
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
 
 
 volumes:

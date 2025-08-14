@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from beanie import init_beanie, Document
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from app.models.smishing import Smishing
-from app.models.user import User
+from models.smishing import Smishing
+from models.user import User
 
 # Cargar el .env
 load_dotenv()

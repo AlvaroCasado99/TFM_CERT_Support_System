@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from app.models.requests import Report
+from models.requests import Report
 
-from app.api.controllers.report_generator_controller import advanced_report_generator
+from api.controllers.report_generator_controller import advanced_report_generator
 
 # Router
 router = APIRouter()

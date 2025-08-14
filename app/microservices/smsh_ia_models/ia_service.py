@@ -14,14 +14,14 @@ from transformers import pipeline
 from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import normalize
 
-#from logger_config.setup_logger import setup_logger
+from logger_config.setup_logger import setup_logger
 
 # API
 app = FastAPI()
 
 # Logger
-#logger = setup_logger("MS1", "ia_service.log", "./logs")
-#logger.info("Arrancando el servicio MS1 (IA)")
+logger = setup_logger("MS1", "ia_service.log", "./logs")
+logger.info("Arrancando el servicio MS1 (IA)")
 
 # Cargar el modelos
 embedder = None
@@ -72,24 +72,11 @@ class Classifier():
 # Acciones a realizar al levantar la API
 @app.on_event("startup")
 def app_init():
-    #global classificator
-    #global classes
     global ner
     global embedder
     global class_bin
     global class_7c
     global class_13c
-
-    
-    # Cargar modelo clasificador
-#    model_path = './bert_classifier'
-#    tokenizer = AutoTokenizer.from_pretrained(model_path)
-#    class_model = AutoModelForSequenceClassification.from_pretrained(model_path)
-#    classificator = pipeline("text-classification", model=class_model, tokenizer=tokenizer)
-
-    # Obtener el mapa de clases
-#    with open(f"{model_path}/config.json", "r") as f:
-#        classes = json.load(f)['labels_list']
 
     # Cargar modelos de clasificación
     class_bin = Classifier(model_path = "./bert_binary")
@@ -107,10 +94,6 @@ def app_init():
 # Endpoint que comprueba el mensaje
 @app.post("/check")
 def smhs_type(req: Request):
-#    msg = [req.msg]
-#    predictions = classificator(msg)
-#    predicted_class = classes[int(predictions[0]['label'].split('_')[1])]
-
     pred_bin = class_bin.classify(msg=req.msg)
     pred_7c = "ham"
     pred_13c = "ham"

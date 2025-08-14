@@ -56,9 +56,10 @@ def smishing_view():
                         {data['msg']}
                         ```
 
-                        - **Tipo:** {data['flavour']}
-                        - **Entidades:** {data['entity']}
-                        - **URL:** {data['url']}
+                        - **Tipo (7C):** {data['flavour']}
+                        - **Tipo (13C):** {data['flavour_13c']}
+                        - **Entidades:** {data['entity'] if data['entity'] else '-'}
+                        - **URL:** {data['url'] if data['url'] else '-'}
                         - **Campaña:** {data['campaign']}
                         """)
 
@@ -102,6 +103,7 @@ def smishing_view():
 
                     if result['ok']:
                         data = result['data']
+                        logger.info(f"{data}")
                         processed = True
                 
                         # Print del reporte
@@ -120,9 +122,10 @@ def smishing_view():
                                 {msg['msg']}
                                 ```
 
-                                - **Tipo:** {msg['flavour']}
-                                - **Entidades:** {msg['entity']}
-                                - **URL:** {msg['url']}
+                                - **Tipo (7C):** {msg['flavour']}
+                                - **Tipo (13C):** {msg['flavour_13c']}
+                                - **Entidades:** {msg['entity'] if msg['entity'] else '-'}
+                                - **URL:** {msg['url'] if msg['url'] else '-'}
                                 - **Campaña:** {msg['campaign']}
                                 """)
                     else:

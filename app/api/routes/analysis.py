@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from app.models.requests import Item
+from models.requests import Item
 
-from app.api.controllers.message_analysis_controller import advanced_text_analysis, db_test
+from api.controllers.message_analysis_controller import advanced_text_analysis, db_test
 
 # Router
 router = APIRouter()

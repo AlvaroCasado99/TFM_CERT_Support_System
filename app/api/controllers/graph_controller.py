@@ -2,7 +2,7 @@ import pandas as pd
 
 #from fastapi import APIRouter, HTTPException, status
 #from app.models.requests import GraphRequest
-from app.models.smishing import Smishing, SmishingProjectionGraphCategory, SmishingProjectionGraphOrganizationCategory, SmishingProjectionGraphMessages
+from models.smishing import Smishing, SmishingProjectionGraphCategory, SmishingProjectionGraphOrganizationCategory, SmishingProjectionGraphMessages
 
 #==============================
 #----- FUNCIONES LOCALES ------

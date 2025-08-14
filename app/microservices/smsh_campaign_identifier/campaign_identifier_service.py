@@ -15,35 +15,6 @@ from beanie import init_beanie, PydanticObjectId
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
-# PRUEBAS
-#from pydantic import Field
-#from beanie import Document
-#from typing import Optional
-
-#class Smishing(Document):
-#    msg: str
-#    flavour: str
-#    entity: Optional[str] | Optional[list]
-#    url: Optional[str]
-#    mail: Optional[str]
-#    phone: Optional[str]
-#    html: Optional[str]
-#    embeddings: list
-#    norm_embeddings: list
-#    campaign: Optional[str]
-#
-#    class Settings:
-#        name = "smishing"   # Nombre de la coleccion en mongo
-
-
-#class SmishingProjectionFAISS(BaseModel):
-#    norm_embeddings: list
-#    campaign: str
-
-
-
-
-
 # ------------ VARIABLES --------------
 # API
 app = FastAPI()
@@ -106,7 +77,6 @@ async def _sync_index_with_database():
 async def app_init():
     # Iniciar Beanie
     client = AsyncIOMotorClient("mongodb://mongo:27017/")
-    #client = AsyncIOMotorClient("mongodb://localhost:27017/")
     await init_beanie(database=client["Phishing"], document_models=[Smishing])
 
     # Crear el índice y obtener datos
@@ -172,9 +142,6 @@ def smhs_type(req: Request):
     # Comprobar la campaña más representada con una consulta
     search_results = zip(D[0], I[0])
     
-    #for i, (score, idx) in enumerate(search_results):
-    #    print(f"{i+1}. Score: {score} | ID: {db_embeddings[idx].id}")
-
     best_idx = I[0][0]
     best_score = D[0][0] 
 

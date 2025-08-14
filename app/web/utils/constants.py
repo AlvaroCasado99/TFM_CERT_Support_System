@@ -57,6 +57,6 @@ INTERVAL_CODE = {
         "Todo": 'M'
 }
 
-API_URL="http://localhost:8000"
+API_URL="http://api:8000"
 
 FILE_MESSAGE_COLUMN="TEXT"

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
-from app.models.requests import GraphRequest
-import app.api.controllers.graph_controller as gc
+from models.requests import GraphRequest
+import api.controllers.graph_controller as gc
 
 # Router
 router = APIRouter()

@@ -1,7 +1,7 @@
 import bcrypt
 
 from fastapi import APIRouter, HTTPException, status
-from app.models.user import User, UserRequest
+from models.user import User, UserRequest
 
 # Router
 router = APIRouter()

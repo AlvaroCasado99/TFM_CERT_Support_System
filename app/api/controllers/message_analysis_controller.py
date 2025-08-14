@@ -2,8 +2,8 @@ import httpx
 import asyncio
 import logging
 
-from app.models.issue import Issue
-from app.models.smishing import Smishing, SmishingProjectionFAISS
+from models.issue import Issue
+from models.smishing import Smishing, SmishingProjectionFAISS
 
 from beanie import PydanticObjectId
 
@@ -39,9 +39,10 @@ async def advanced_text_analysis(msg):
         # Loop entre cada mensaje
         results = list()
         for m in msg:
-            print(f"MSG: {m}\n")
+            logger.info(f"MSG: {m}\n")
             msg_info = await _analyse_text(m)
             results.append(msg_info)
+            logger.info("--> Terminado de procesar este mensaje")
 
         return results
 
@@ -100,12 +101,10 @@ async def _analyse_text(msg):
 
     # Paralelización de las peticiones a los contenedores
     preds, entities, embeds = await asyncio.gather(
-        _limited_post_request("http://localhost:8001/check", {"msg": msg}),
-        _limited_post_request("http://localhost:8001/entity", {"msg": msg}),
-        _limited_post_request("http://localhost:8001/embedding", {"msg": msg})
+        _limited_post_request("http://ms1:8000/check", {"msg": msg}),
+        _limited_post_request("http://ms1:8000/entity", {"msg": msg}),
+        _limited_post_request("http://ms1:8000/embedding", {"msg": msg})
     )
-
-    print(entities)
 
     # Conocer el tipo de smishing
     issue.flavour = preds['7c']
@@ -125,28 +124,25 @@ async def _analyse_text(msg):
     issue.phone = ""
 
     # Obtener código HTML de la URL
-    print("Voy a buscar el HTML ")
     if issue.url != "":
         html = await _normal_post_request(
-                url="http://localhost:8002/url", 
+                url="http://ms2:8000/url", 
                 data={"url": issue.url}, 
-                timeout=10.0
+                timeout=5.0
             )
-        print(f"HTML: {html}")
+        print(f"HTML: {type(html)}")
         issue.html = html
 
     # Obtener (si existe) campaña asociada
-    print("Voy a buscar su campaña")
     issue.campaign = await _normal_post_request(
-            url="http://localhost:8003/campaign", 
+            url="http://ms3:8000/campaign", 
             data={"embedding": issue.norm_embeddings}, 
             timeout=10.0
         )
     
     # Actualizar el índice con los mensajes
-    print("Voy a actualizar el índice")
     await _normal_post_request(
-            url="http://localhost:8003/update", 
+            url="http://ms3:8000/update", 
             data={
                 "norm_embeddings": issue.norm_embeddings,
                 "campaign": issue.campaign
@@ -171,6 +167,7 @@ async def _analyse_text(msg):
             )
     await Smishing.insert_one(message)
 
-
+    
+    logger.info("Saliendo del analizador...")
     return issue.to_dict()
 
