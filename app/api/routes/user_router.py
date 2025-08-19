@@ -1,7 +1,14 @@
-import bcrypt
+import logging
 
 from fastapi import APIRouter, HTTPException, status
-from models.user import User, UserRequest
+
+from models.user import User, UserRequest, RegisterRequest, ChangePasswdRequest
+from exceptions.db_exceptions import DatabaseLoadError
+from exceptions.user_exceptions import WrongCredentialsError
+from controllers.user_controller import validate_user, register_user, change_user_passwd
+
+# Obtener el logger
+logger = logging.getLogger("API")
 
 # Router
 router = APIRouter()
@@ -14,36 +21,49 @@ def get_analysis_test():
             "message": "Router /user funciona!"
             }
 
-# Endpoint para autenticar usuarios
+"""
+    Endpoint 
+    Permite autenticar usuarios por contraseña
+"""
 @router.post("/login")
 async def user_login(req: UserRequest):
-    user = await User.find_one({"username": req.username})
-
-    # Comprobar que existe el usuario
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid Credentials", headers={"WWW-Authenticate": "Bearer"})
-        
-    # Comprobar que la contraseña es correcta
-    match = bcrypt.checkpw(req.password.encode('utf-8'), user.password.encode('utf-8'))
-    if not match:
-        raise HTTPException(status_code=401, detail="Invalid Credentials", headers={"WWW-Authenticate": "Bearer"})
-    
-    # Crear nuevo token
-
-    return {
-            "token": "TokenDePrueba",
-            "user": {
-                "name": user.username,
-                "surname": user.surname,
-                "username": user.username,
-                "email": user.email,
-                "phone": user.phone,
-                "rol": user.rol
-                }
-            }
+    logger.info("Nueva petición de login")
+    return await validate_user(req)
 
 
-#@router.post("/register")
-#async def user_register():
-#    hashpass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(10)).decode("utf-8")
+"""
+    Endpoint:
+    Permite registrar a un usuario
+"""
+@router.post("/register")
+async def user_register(req: RegisterRequest):
+    logger.info("Nueva petición de registro de usuario")
+    try:
+        return await register_user(req)
+    except DatabaseLoadError as e:
+        raise HTTPException(status_code=400, detail="No se ha podido crear el usuario.")
+
+"""
+    Endpoint:
+    Permite al usuario cambiar la contraseña
+"""
+@router.post("/change_pass")
+async def user_change_passwd(req: ChangePasswdRequest):
+    logger.info("Nueva petición de cambio de contraseña")
+    try:
+        return await change_user_passwd(
+                username=req.username,
+                new_passwd=req.new_passwd, 
+                old_passwd=req.old_passwd
+            )
+    except WrongCredentialsError as e: 
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="No se ha podido cambiar la contraseña.")
+
+
+
+
+
+
 

@@ -60,3 +60,6 @@ INTERVAL_CODE = {
 API_URL="http://api:8000"
 
 FILE_MESSAGE_COLUMN="TEXT"
+
+USER_ROL="user"
+ADMIN_ROL="admin"

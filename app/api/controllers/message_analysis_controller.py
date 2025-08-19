@@ -123,22 +123,29 @@ async def _analyse_text(msg):
     issue.mail = entities["email"]
     issue.phone = ""
 
-    # Obtener código HTML de la URL
+    # Obtener código HTML y campaña 
     if issue.url != "":
-        html = await _normal_post_request(
-                url="http://ms2:8000/url", 
-                data={"url": issue.url}, 
-                timeout=5.0
-            )
-        print(f"HTML: {type(html)}")
-        issue.html = html
+#        html = await _normal_post_request(
+#                url="http://ms2:8000/url", 
+#                data={"url": issue.url}, 
+#                timeout=5.0
+#            )
+#        print(f"HTML: {type(html)}")
+#        issue.html = html
 
-    # Obtener (si existe) campaña asociada
-    issue.campaign = await _normal_post_request(
-            url="http://ms3:8000/campaign", 
-            data={"embedding": issue.norm_embeddings}, 
-            timeout=10.0
-        )
+        html, campaign = await asyncio.gather(
+                _limited_post_request("http://ms2:8000/url", {"url":issue.url}, 5.0),
+                _limited_post_request("http://ms3:8000/campaign", {"embedding":issue.norm_embeddings}, 10.0)
+            )
+        issue.html = html
+        issue.campaign = campaign
+    else:
+        # Obtener (si existe) campaña asociada
+        issue.campaign = await _normal_post_request(
+                url="http://ms3:8000/campaign", 
+                data={"embedding": issue.norm_embeddings}, 
+                timeout=10.0
+            )
     
     # Actualizar el índice con los mensajes
     await _normal_post_request(

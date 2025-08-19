@@ -11,6 +11,29 @@ class UserRequest(BaseModel):
     username: str
     password: str
 
+
+
+"""
+    Modelo para requests de registro de usuarios
+    No se pide contraseña porque se genera internamente
+"""
+class RegisterRequest(BaseModel):
+    name: str
+    surname: str
+    username: str
+    email: str
+    phone: Optional[str]
+    rol: str
+
+
+"""
+    Modelo para request de cambio de contraseña    
+"""
+class ChangePasswdRequest(BaseModel):
+    username: str
+    old_passwd: str
+    new_passwd: str
+
 """
     Modelo para los usuarios de la base de datos
 """
