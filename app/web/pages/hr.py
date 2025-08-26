@@ -5,6 +5,7 @@ import streamlit as st
 
 from web.utils.form_utils import is_valid_email
 from web.services.user_services import register_new_user
+from web.utils.constants import ROOT_ROL
 
 logger = logging.getLogger("frontend")
 
@@ -14,17 +15,21 @@ logger = logging.getLogger("frontend")
 """
 def _load_new_user_form():
     st.title("Nuevo usuario")
-    
-    # Campos de entrada
-    name = st.text_input("Nombre")
-    surname = st.text_input("Apellido")
-    username = st.text_input("Nombre de usuario")
-    email = st.text_input("Email")
-    phone = st.text_input("Teléfono (opcional)")
-    rol = st.selectbox("Rol", ["user", "admin"])
+    st.markdown("---")
+
+    # Crear formulario
+    with st.form("password_form", clear_on_submit=True):
+        name = st.text_input("Nombre")
+        surname = st.text_input("Apellido")
+        username = st.text_input("Nombre de usuario")
+        email = st.text_input("Email")
+        phone = st.text_input("Teléfono (opcional)")
+        rol = st.selectbox("Rol", ["user", "admin"] if st.session_state.user['rol']==ROOT_ROL else ["user"])
+
+        submit = st.form_submit_button("Enviar")
 
     # Botón de envío
-    if st.button("Enviar"):
+    if submit:
 
         # Validación
         if not name or not surname or not username or not email:

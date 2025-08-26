@@ -7,11 +7,16 @@ from pages.dashboard import dashboard_view
 from pages.smishing import smishing_view
 from pages.hr import hr_view
 from pages.profile import profile_view
-from utils.constants import USER_ROL, ADMIN_ROL
+from pages.legal import privacy_view, legal_disclaimer_view
+from utils.constants import USER_ROL, ADMIN_ROL, ROOT_ROL
 
 logger = setup_logger("frontend", "frontend.log", "./logs")
 logger.info("Arrancando streamlit.")
 
+
+
+
+# Función principal
 def main():
     # Inicializar varibles de sesion
     if 'token' not in st.session_state:
@@ -28,19 +33,24 @@ def main():
     hr_page = st.Page(hr_view, title="Human Resources", icon=":material/group:")
     dashboard_page = st.Page(dashboard_view, title="Dashboard", icon=":material/dashboard:", default=True)
     smishing_page = st.Page(smishing_view, title="Report", icon=":material/bug_report:")
+    privacy_page = st.Page(privacy_view, title="Privacy", icon=":material/privacy_tip:")
+    legal_note_page = st.Page(legal_disclaimer_view, title="Legal Note", icon=":material/balance:")
 
     # Definir la barra de navegación
     if st.session_state.logged_in:
-        pg = st.navigation(
-            {
-                "Account": [logout_page, profile_page],
-                "Reports": [dashboard_page, smishing_page]
-            }
-        )
+        navs = {
+            "Account": [logout_page, profile_page],
+            "Reports": [dashboard_page, smishing_page],
+            "Legal": [privacy_page, legal_note_page]
+        }
 
         # Añadir vistas exclusivas de usuario administrador
-        if st.session_state.user['rol'] == ADMIN_ROL:
-            pg['Administration'] = [hr_view]
+        if st.session_state.user['rol'] in [ADMIN_ROL, ROOT_ROL]:
+            navs['Administration'] = [hr_page]
+        
+        # Crear el navegador
+        pg = st.navigation(navs)
+
     else:
         pg = st.navigation([login_page])
         

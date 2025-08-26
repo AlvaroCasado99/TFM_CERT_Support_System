@@ -42,9 +42,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     greetings = responses[DEFAULT_LENG]['greetings']
     rules = responses[DEFAULT_LENG]['rules']
     commands = responses[DEFAULT_LENG]['commands']
+    disclaimer = responses[DEFAULT_LENG]['ia_act']
     await update.message.reply_text(f'{greetings} {update.effective_user.first_name}')
     await update.message.reply_text(rules)   
     await update.message.reply_text(commands)   
+    await update.message.reply_text(disclaimer)   
 
 
 """
@@ -65,6 +67,15 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def commands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     commands = responses[DEFAULT_LENG]['commands']
     await update.message.reply_text(commands)
+
+
+"""
+    Comando /privacy
+    Devuelve la política de privacidad de esta aplicación
+"""
+async def privacy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    legal_priv = responses[DEFAULT_LENG]['privacy']
+    await update.message.reply_text(legal_priv)
 
 
 
@@ -196,6 +207,7 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", info))
 app.add_handler(CommandHandler("commands", commands))
 app.add_handler(CommandHandler("hello", hello))
+app.add_handler(CommandHandler("privacy", privacy))
 app.add_handler(sms_text_handler)
 app.add_handler(MessageHandler(filters.ALL, unknown))   # Es el handler por defecto, debe ser el último
 

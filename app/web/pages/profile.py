@@ -7,6 +7,7 @@ logger = logging.getLogger("frontend")
 
 def profile_view():
     st.title("👤 Perfil de Usuario")
+    st.markdown("---")
 
     # --- Contenedor de información del usuario ---
     with st.container():
