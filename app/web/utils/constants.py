@@ -49,26 +49,6 @@ CHART_COLORS = [
     '#5DADE2'   # Azul cielo
 ]
 
-FOOTER_CSS = """
-<style>
-/* Hace que el contenedor ocupe la altura de la ventana y el footer quede al final */
-main .block-container{
-  min-height: calc(100vh - 80px);
-  display: flex;
-  flex-direction: column;
-}
-.app-footer{
-  margin-top: auto;               /* empuja el footer al fondo */
-  border-top: 1px solid #EEE;
-  padding: 12px 0 24px 0;
-  text-align: center;
-  color: #666;
-  font-size: 0.9rem;
-}
-.app-footer .sep{ margin: 0 8px; color: #AAA; }
-</style>
-"""
-
 PRIVACY_POLICY = """El presente sistema (aplicación web y bot de Telegram) tiene como finalidad detectar y analizar mensajes sospechosos de smishing con fines de concienciación y ciberseguridad.
 
 Responsable del tratamiento: Álvaro Casado Miguelez — Contacto: [acasam@antismish.es].

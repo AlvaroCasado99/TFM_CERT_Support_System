@@ -2,24 +2,25 @@ import os
 import httpx
 
 from dotenv import load_dotenv
-
 from telegram import Update
 from telegram.ext import (
         ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, ConversationHandler, filters
                           )
 
+from logger_config.setup_logger import setup_logger
 from responses import responses
+
+# Inicial el logger
+logger = setup_logger("bot", "bot.log", "./logs")
+logger.info("Arrancando Bot Telegram.")
 
 # Cargar las variables de entorno de .env
 load_dotenv()
 
-# Cargar token de Telegram
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-# Estados para cada flujo de onversaciones
-STATE_SMS = 1
-
 # Variables globales
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Carga token de Telegram
+API_URI = os.getenv("API_URI")  # Carga token de Telegram
+STATE_SMS = 1   # Estados para cada flujo de conversaciones
 DEFAULT_LENG = "es"
 
 # Funcione de los manejadores
@@ -105,17 +106,20 @@ async def start_sms(update: Update, context: ContextTypes.DEFAULT_TYPE):
 """
 def _generate_response(data, lang: str ="es"):
     response = ""
-
+    logger.info(f"{data}")
+    logger.info(f"<{data['entity']}>, type(data['entity'])")
     if data["flavour"] == "ham":
         response = responses[lang]["smsh_safe"]
     
     else:
         # Construir la respuesta con los datos
         response = "\n" + responses[lang]["smsh_flavour"].replace("$$FLAVOUR$$", data["flavour"]) + "\n"
-        if isinstance(data['entity'], str):
-            response += "\n" +  responses[lang]["smsh_entity"].replace("$$ENTITY$$", data["entity"]) + "\n"
-        else:
-            response += "\n" + responses[lang]["smsh_entities"].replace("$$ENTITIES$$", ", ".join(data["entity"])) + "\n"
+
+        if data['entity']:
+            if isinstance(data['entity'], str):
+                response += "\n" +  responses[lang]["smsh_entity"].replace("$$ENTITY$$", data["entity"]) + "\n"
+            else:
+                response += "\n" + responses[lang]["smsh_entities"].replace("$$ENTITIES$$", ", ".join(data["entity"])) + "\n"
 
         if data['url']:
             response += "\n" + responses[lang]["smsh_url"] + "\n"
@@ -132,7 +136,7 @@ async def _analyse_message(msg: str):
         # Lanzar peticion a la API
         async with httpx.AsyncClient() as client:
             res = await client.post(
-                "http://localhost:8000/analyse/text/advanced",
+                f"{API_URI}analyse/text/advanced",
                 json={"msg": msg}
             )
         
@@ -141,16 +145,19 @@ async def _analyse_message(msg: str):
     
     except httpx.RequestError as e:
         print(f"Request Error {e}")
+        logger.error(f"Request Error: {e}.")
         return {"ok": False, "error": "Error de conexión. Inténtelo más tarde."}
 
     except httpx.HTTPStatusError as e:
         status_code = e.response.status_code
         print(f"He recogido este error: {status_code} -> {e}")
+        logger.error(f"He recogido este error {status_code} -> {e}.")
         if status_code >= 500:
             return {"ok": False, "error": "Error del servidor. Inténtelo más tarde."}
         else:
             return {"ok": False, "error": f"Ha ocurrido un error inesperado ({status_code})."}
     except Exception as e:
+        logger.error(f"Ha ocurrido un error inesperado: {e}.") 
         return {"ok": False, "error": f"Ha ocurrido un error inesperado ({e})."}
 
 
