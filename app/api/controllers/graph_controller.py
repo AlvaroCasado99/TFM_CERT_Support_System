@@ -10,6 +10,9 @@ from models.smishing import Smishing, SmishingProjectionGraphCategory, SmishingP
 
 # Crear columna de agrupación temporal
 def _group_data_by_time_interval(df: pd.DataFrame, interval: str) -> pd.DataFrame:
+    # Normaliza timestamps a UTC y hazlos "naive" (sin tz)
+    df['created_at'] = pd.to_datetime(df['created_at'], utc=True, errors='coerce').dt.tz_localize(None)
+
     if interval == 'D':
         df['time_group'] = df['created_at'].dt.date
     elif interval == 'H':
