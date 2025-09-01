@@ -1,31 +1,59 @@
 # TFM_CERT_Support_System
 
-# Para lanzar la base de datos mongo
-1. Ir a *app/*
-2. Levantar el contenedor: *docker compose up -d* 
+## Sobre el CERT Support System
+### Resumen
+El sistema fue creado con el objetivo de apoyar a equipos técnicos (CERT/CSIRT) en la gestión eficiente del smishing, dado el incremento de este tipo de ataques, su alta rentabilidad para los ciberdelincuentes y la carencia de herramientas especializadas. La motivación principal es automatizar la detección, clasificación y análisis de mensajes de smishing, reduciendo la carga de trabajo humano y facilitando la investigación de campañas fraudulentas.
 
-# Para lanzar la API en local con UVICORN:
-1. Ir a la carpeta raíz
-2. Ejecutar el comando: *python3 main.py*
+Entre sus características destacan:
 
-o también:
-1. Ir a la carpeta raíz
-2. Lanzar el comando:  *uvicorn app.api.main:app --reload*
-    **app.api.main** -> Es la ruta al MAIN de la API
-    **:app** -> Es el nombre de la instancia de FastAPI en el main.py
-    **--reload** -> Permite que se recargue el servidor cuando detecte cambios en el código fuente
+1. Detección automática de mensajes mediante modelos de IA basados en BERT, capaces de realizar clasificación binaria (smishing/no smishing) y categorización en 7 y 13 tipos.
 
-# ¿Cómo funciona?
-Arquitectura:
-1. API principal (Host)
-2. Base de datos Mongo (Docker)
-3. Nginx (Host)
-4. Microservicio 1: Smishing Type (Docker)
-5. Microservicio 2: NER Detection (Docker)
-6. Microservicio 3: Deteccion de URL, Mail, Phone... (Docker)
-7. Microservicio 4: Obtención de código HTML (Docker)
-8. Microservicio 5: Función de similitud de campañas (Docker)
+2. Extracción de entidades (NER) para identificar información sensible (bancos, URLs, números de teléfono).
 
+3. Agrupación semántica de campañas mediante FAISS, que permite relacionar mensajes similares.
+
+4. Captura y análisis de HTML de enlaces asociados.
+
+5. Interfaces diferenciadas: una aplicación web para técnicos y otra móvil para ciudadanos/empresas que reportan casos.
+
+La arquitectura está concebida como un sistema integral distribuido en microservicios y contenedorizado con Docker, orquestado a través de una API principal en FastAPI detrás de un proxy inverso Nginx y respaldado por MongoDB como base de datos. Esta arquitectura facilita la escalabilidad, el despliegue independiente de cada componente y la integración modular de nuevos servicios de análisis.
+
+### Componentes
+1. API principal        (Docker: api)
+2. Base de datos Mongo  (Docker: mongo)
+3. Manejador Bot        (Docker: bot)
+4. Proxy inverso Nginx  (Docker: nginx)
+5. Servicio 1: IA       (Docker: ms1)
+6. Servicio 2: HTML     (Docker: ms2)
+7. Servicio 3: Campañas (Docker: ms3)
+
+### Arquitectura
+<img src="img/arquitectura.png" alt="Arquitectura del sistema" width="600"/>
+
+## Cómo ejecutar el sistema
+En esta sección se explicarán los scripts y comandos para poder lanzar la aplicación. Para poder acceder con TLS/SSL, leer la siguiente sección.
+
+1. **Acceder a la raíz del sistema**
+   ```bash
+   cd app/nginx
+   mkdir -p ssl CA
+   ```
+2. **Dar permisos de ejecución a los scripts**
+   ```bash
+   chmod +x launch.sh
+   ```
+3. **Lanzar aplicación**
+    Para lanzar la aplicación en segundo plano ejecutar el script `launch.sh`, y si se desean ver los logs, incluir el parámetro `-logs`:
+   ```bash
+   ./launch.sh
+   ./launch.sh -logs
+   ```
+4. **Detener aplicación**
+    Se podrá hacer mediante el comando de `docker-compose`:
+   ```bash
+   docker-compose down
+   ```
+   
 ## 🔐 Simular TLS
 
 En este proyecto se incluye una simulación de **CA (Certificate Authority)** y **Servidor** para configurar HTTPS en Nginx con certificados firmados por una CA propia.  
