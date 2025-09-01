@@ -12,12 +12,27 @@ ml/
 *.swp
 
 # Ignorar logs
+logs/
 *.log
+
+# Ignorar archivos csv, y xlsx
+*.xlsx
+*.csv
+
+# Ignorar claves, certificados y csr
+ssl/
+CA/
+*.key
+*.crt
+*.csr
+*.srl
 
 # ignorar modelos
 bert_classifier/
+bert_binary/
+bert_classifier_7c/
+bert_classifier_13c/
 
 # Ignorar archivos
 test.sh
-MIMICS-3500-v1.xlsx
 data_loader.py
